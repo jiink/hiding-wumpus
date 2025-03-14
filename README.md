@@ -22,3 +22,7 @@ This project stems from a basic LLM-generated A* pathfinding algorithm visualize
 This is what that looked like:
 
 ![screenshot](starting-point-screenshot.png)
+
+The prompt used can be found here:
+
+https://claude.ai/share/29d68079-5a93-470c-a7d1-ed13229672ea
