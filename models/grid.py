@@ -19,6 +19,32 @@ class Grid:
                 row.append(GridNode(x, y))
             self.nodes.append(row)
     
+    # Returns true if there is a solid tile between the two tile positions
+    # on the grid. Used for calculating visibility.
+    def is_wall_between(self, pos0: Tuple[int, int], pos1: Tuple[int, int]):
+        x0, y0 = pos0
+        x1, y1 = pos1
+        # Really, this is just a line drawing algorithm (Bresenham's)
+        # but instead of drawing pixels at each coordinate we just
+        # check if the tile is solid or not
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx - dy
+        while (x0, y0) != (x1, y1):
+            node = self.get_node(x0, y0)
+            if node is not None and node.is_wall:
+                return True
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x0 += sx
+            if e2 < dx:
+                err += dx
+                y0 += sy
+        return False # if this func is giving trouble, check this final tile too.
+
     # true if cell coordinates given are within the grid.
     def is_valid_position(self, x: int, y: int) -> bool:
         return 0 <= x < self.size and 0 <= y < self.size
@@ -77,7 +103,12 @@ class Grid:
         for y in range(self.size):
             for x in range(self.size):
                 node = self.nodes[y][x]
-                color = WALL_TILE_COLOR if node.is_wall else EMPTY_TILE_COLOR
+                if node.is_wall:
+                    color = WALL_TILE_COLOR
+                elif not node.seen:
+                    color = (0, 0, 0)
+                else:
+                    color = EMPTY_TILE_COLOR
                 rect = pygame.Rect(
                     *self.grid_to_screen(x, y),
                     self.tile_size,

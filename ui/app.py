@@ -114,11 +114,22 @@ class App:
                     if self.click_mode == ClickMode.TARGET:
                         self.seeker_npc.set_target(grid_x, grid_y)
             self.ui_manager.process_events(event) # pygame_gui requires this
+
+    def update_visibility(self):
+        # A gridnode is marked not visible if there is a wall tile between its
+        # grid position and the npc
+        for nrow in self.grid.nodes:
+            for n in nrow:
+                n_pos = n.get_position()
+                n.seen = not self.grid.is_wall_between(n_pos, self.seeker_npc.position.to_grid_pos())            
+         
     
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
         self.ui_manager.update(dt) # pygame_gui requires this
         self.seeker_npc.update(dt)
+        self.update_visibility()
+
     
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)

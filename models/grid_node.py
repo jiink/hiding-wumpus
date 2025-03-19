@@ -7,6 +7,7 @@ class GridNode:
         self.y = y
         self.is_wall = is_wall
         self.reset_path_data()
+        self.seen = True # false if obstructed by wall
     
     def reset_path_data(self):
         self.g_score = 99999 # The path cost
