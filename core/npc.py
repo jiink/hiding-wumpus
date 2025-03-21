@@ -8,6 +8,8 @@ import random
 # This NPC lives on a grid and pursues the target via its pathfinder.
 class Npc:
     THINK_INTERVAL = 1.0 # This npc will think every X seconds
+    THOUGHT_DURATION = 0.5 # how long does thought-text appear for? (in sec)
+
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         self.grid = grid
         self.pathfinder = pathfinder
@@ -20,10 +22,12 @@ class Npc:
         self.color = color
         self.can_think = can_think
         self.think_timer = 0
-    
+        self.thought_text = None
+        self.thought_timer = 0
+
     def set_speed(self, speed: float):
         self.speed = speed
-    
+
     # If a node is at the given grid coordinates, the NPC will start pursuing
     # it.
     # Returns true if successful, false if the target could not be set.
@@ -37,11 +41,11 @@ class Npc:
             return True
         else:
             return False
-    
+
     # NPCs come up with a target in this function.
     def think(self):
         raise NotImplementedError("Inherit this class and override this think() function!")
-    
+
     # Assuming there's a valid target, finds a path to that target.
     # Returns true if it's working, false if it doesn't.
     def update_path(self):
@@ -62,7 +66,7 @@ class Npc:
             return True
         else:
             return False
-    
+
     # Every frame, this NPC will move along its path smoothly from 
     # one point to the other.
     # `dt` means delta time, the amount of time passed since the last
@@ -74,7 +78,14 @@ class Npc:
             if self.think_timer >= self.THINK_INTERVAL:
                 self.think()
                 self.think_timer = 0.0
-        
+
+        # Update thought timer
+        if self.thought_text:
+            self.thought_timer += dt
+            if self.thought_timer >= self.THOUGHT_DURATION:
+                self.thought_text = None
+                self.thought_timer = 0
+
         # do nothing if there's no path to travel.
         if not self.path or self.current_path_index >= len(self.path):
             return
@@ -96,8 +107,15 @@ class Npc:
             # how far to move this frame
             move_dist = min(self.speed * dt, dist)
             self.position = self.position + dir * move_dist
-        
-    
+
+    # instead of doing print statements, it's cool to call
+    # this which causes the string to appear over the npc's head
+    # for a bit then fade away
+    def emit_thought(self, text: str):
+        print(text)
+        self.thought_text = text
+        self.thought_timer = 0
+
     def draw(self, surface: pygame.Surface):
         pygame.draw.circle(
             surface, self.color,
@@ -117,3 +135,9 @@ class Npc:
                              (x + size, y - size), 
                              (x - size, y + size), 
                              width=3)
+        if self.thought_text:
+            font = pygame.font.Font(None, 24)
+            text_surface = font.render(self.thought_text, True, self.color)
+            text_rect = text_surface.get_rect(center=(self.grid.grid_to_screen(self.position.x, self.position.y - 1)))
+            text_surface.set_alpha(max(0, 255 * (1 - self.thought_timer / self.THOUGHT_DURATION)))
+            surface.blit(text_surface, text_rect)
