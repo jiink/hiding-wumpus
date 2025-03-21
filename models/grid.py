@@ -97,6 +97,10 @@ class Grid:
         grid_y = max(0, min(grid_y, self.size - 1))
         return (grid_x, grid_y)
     
+    @staticmethod
+    def add_colors(color1: Tuple[int, int, int], color2: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        return tuple(min(c1 + c2, 255) for c1, c2 in zip(color1, color2))
+    
     # In pygame, a "surface" is like a render texture in other frameworks/engines.
     def draw(self, surface: pygame.Surface):
         # tiles
@@ -105,10 +109,13 @@ class Grid:
                 node = self.nodes[y][x]
                 if node.is_wall:
                     color = WALL_TILE_COLOR
-                elif not node.seen:
-                    color = (0, 0, 0)
                 else:
                     color = EMPTY_TILE_COLOR
+                if node.seen_by_seeker:
+                    color = self.add_colors(color, (0, 0, 50))
+                if node.seen_by_hider:
+                    color = self.add_colors(color, (50, 0, 0))
+                
                 rect = pygame.Rect(
                     *self.grid_to_screen(x, y),
                     self.tile_size,

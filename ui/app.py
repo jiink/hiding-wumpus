@@ -125,7 +125,8 @@ class App:
         for nrow in self.grid.nodes:
             for n in nrow:
                 n_pos = n.get_position()
-                n.seen = not self.grid.is_wall_between(n_pos, self.seeker_npc.position.to_grid_pos())            
+                n.seen_by_seeker = not self.grid.is_wall_between(n_pos, self.seeker_npc.position.to_grid_pos())
+                n.seen_by_hider = not self.grid.is_wall_between(n_pos, self.hider_npc.position.to_grid_pos())
          
     
     # dt is delta time, the time passed since the last update.
