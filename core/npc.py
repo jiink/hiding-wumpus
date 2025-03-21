@@ -38,16 +38,9 @@ class Npc:
         else:
             return False
     
-    # Find a place to go.
+    # NPCs come up with a target in this function.
     def think(self):
-        print("I am thinking!")
-        # Random spot
-        while True:
-            x = random.randint(0, self.grid.size - 1)
-            y = random.randint(0, self.grid.size - 1)
-            if self.set_target(x, y):
-                self.update_path()
-                break
+        raise NotImplementedError("Inherit this class and override this think() function!")
     
     # Assuming there's a valid target, finds a path to that target.
     # Returns true if it's working, false if it doesn't.

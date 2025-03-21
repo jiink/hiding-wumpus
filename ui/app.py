@@ -4,8 +4,10 @@ import pygame
 import pygame_gui
 
 from constants import *
+from core.hider_a import HiderA
 from core.pathfinder import Pathfinder
 from core.npc import Npc
+from core.seeker import Seeker
 from models.grid import Grid
 
 # This is just an enum.
@@ -31,8 +33,9 @@ class App:
         # Initialize our non-pygame stuff
         self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
-        self.seeker_npc = Npc(self.grid, self.pathfinder, SEEKER_COLOR, can_think=False)
-        self.hider_npc = Npc(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+        self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=False)
+        # TODO: some way to change the hider algorithms during runtime
+        self.hider_npc = HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
         self.click_mode = ClickMode.TILE
         self.debug_mode = True
         self.create_ui()
