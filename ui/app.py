@@ -5,7 +5,7 @@ import pygame_gui
 
 from constants import *
 from core.pathfinder import Pathfinder
-from core.seeker_npc import SeekerNPC
+from core.npc import Npc
 from models.grid import Grid
 
 # This is just an enum.
@@ -31,7 +31,8 @@ class App:
         # Initialize our non-pygame stuff
         self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
-        self.seeker_npc = SeekerNPC(self.grid, self.pathfinder)
+        self.seeker_npc = Npc(self.grid, self.pathfinder, SEEKER_COLOR, can_think=False)
+        self.hider_npc = Npc(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
         self.click_mode = ClickMode.TILE
         self.debug_mode = True
         self.create_ui()
@@ -128,6 +129,7 @@ class App:
     def update(self, dt):
         self.ui_manager.update(dt) # pygame_gui requires this
         self.seeker_npc.update(dt)
+        self.hider_npc.update(dt)
         self.update_visibility()
 
     
@@ -137,6 +139,7 @@ class App:
         if self.debug_mode:
             self.pathfinder.draw_debug(self.screen)
         self.seeker_npc.draw(self.screen)
+        self.hider_npc.draw(self.screen)
         self.ui_manager.draw_ui(self.screen)
         # Now show the frame
         pygame.display.flip()
