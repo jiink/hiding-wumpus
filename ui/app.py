@@ -7,6 +7,8 @@ from constants import *
 from core.pathfinder import Pathfinder
 from core.seeker_npc import SeekerNPC
 from models.grid import Grid
+from models.vector import Vector2
+from level_manager import LevelManager
 
 # This is just an enum.
 # Used to know what happens when you click on the grid.
@@ -79,6 +81,25 @@ class App:
             value_range=(1.0, 10.0),
             manager=self.ui_manager
         )
+        # Save Level Button
+        self.save_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn, 
+                                    btn_mn, 
+                                    btn_w, 
+                                    btn_h),
+            text="Save Level",
+            manager=self.ui_manager
+        )
+        
+        # Load Level Button
+        self.load_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn,
+                                    btn_mn * 2 + btn_h,
+                                    btn_w,
+                                    btn_h),
+            text="Load Level",
+            manager=self.ui_manager
+        )
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -96,6 +117,11 @@ class App:
                     elif event.ui_element == self.debug_button:
                         self.debug_mode = not self.debug_mode
                         self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
+                    elif event.ui_element == self.save_button:
+                        LevelManager.save_level(self.grid, self.seeker_npc, Vector2)
+                    elif event.ui_element == self.load_button:
+                        LevelManager.load_level(self.grid, self.seeker_npc, Vector2)
+
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
