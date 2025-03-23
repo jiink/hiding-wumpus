@@ -9,6 +9,8 @@ from core.pathfinder import Pathfinder
 from core.npc import Npc
 from core.seeker import Seeker
 from models.grid import Grid
+from models.vector import Vector2
+from level_manager import LevelManager
 
 # This is just an enum.
 # Used to know what happens when you click on the grid.
@@ -84,10 +86,30 @@ class App:
             value_range=(1.0, 10.0),
             manager=self.ui_manager
         )
+
         # Toggle seeker mode (manual or AI)
         self.seeker_manual_mode_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(btn_mn * 4 + btn_w * 3, btn_mn, btn_w, btn_h),
             text="Seeker: CPU",
+        )
+
+        # Save Level Button
+        self.save_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn, 
+                                    btn_mn, 
+                                    btn_w, 
+                                    btn_h),
+            text="Save Level",
+            manager=self.ui_manager
+        )
+        
+        # Load Level Button
+        self.load_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn,
+                                    btn_mn * 2 + btn_h,
+                                    btn_w,
+                                    btn_h),
+            text="Load Level",
             manager=self.ui_manager
         )
     
@@ -111,6 +133,10 @@ class App:
                         self.seeker_manual_mode = not self.seeker_manual_mode
                         self.seeker_npc.auto_move = not self.seeker_manual_mode
                         self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
+                    elif event.ui_element == self.save_button:
+                        LevelManager.save_level(self.grid, self.seeker_npc, Vector2)
+                    elif event.ui_element == self.load_button:
+                        LevelManager.load_level(self.grid, self.seeker_npc, Vector2)
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
