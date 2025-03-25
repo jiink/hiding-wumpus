@@ -116,7 +116,6 @@ class Npc:
         self.thought_timer = 0
 
     def draw(self, surface: pygame.Surface):
-        self.think_draw(surface)
         pygame.draw.circle(
             surface, self.color,
             center = self.grid.grid_to_screen(self.position.x, self.position.y),
@@ -142,7 +141,3 @@ class Npc:
             text_surface.set_alpha(max(0, 255 * (1 - self.thought_timer / self.THOUGHT_DURATION)))
             surface.blit(text_surface, text_rect)
         
-    
-    # to be overriden
-    def think_draw(self, surface: pygame.Surface):
-        pass

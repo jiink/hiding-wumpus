@@ -3,6 +3,7 @@ import random
 from typing import List, Tuple
 
 import pygame
+from constants import INF
 from core.npc import Npc
 from models.grid_node import GridNode
 
@@ -12,8 +13,8 @@ class HiderA(Npc):
             super().__init__(*args, **kwargs)
             # this is an instance variable so we can see it 
             # drawn to the screen in think_draw()
-            self.candidates = [] # (node, score)
-            self.shadow_depths = [] # (node, depth)
+            self.candidates: dict[GridNode, float] = {} # index by node to get score
+            self.shadow_depths: dict[GridNode, int] = {} # index by node to get depth
     
     # Finds the distances between every shadowed node and the nearest node seen
     # by the seeker and stores it in self.shadow_depths
@@ -22,34 +23,50 @@ class HiderA(Npc):
         # good resource: https://medium.com/geekculture/multisource-bfs-for-your-faang-coding-interviews-d5177753f507
         que = queue.Queue() # could use [], but this has faster operations I heard
         all_nodes = self.grid.all_nodes()
-        num_nodes = len(self.grid.all_nodes)
         # Store distance from each node to a seen node. it's a dictionary!
-        distances: dict[GridNode, int] = {}
-        INF: int = 9999999
+        self.shadow_depths: dict[GridNode, int] = {} # AKA distances
+        
         for i in range(0, len(all_nodes)):
-            distances[all_nodes[i]] = INF
+            self.shadow_depths[all_nodes[i]] = INF
         # Initialize the queue. usually in BFS we would start the queue with one
         # node, but we can just start it will all the nodes. Let the queue
         # begin with all seen nodes.
         for node in all_nodes:
             if node.seen_by_seeker:
-                queue.put(node)
-                distances[node] = 0
-        dist = 0
+                que.put(node)
+                self.shadow_depths[node] = 0
+        dist = 1 # This will increment for every level of BFS done. You can 
+        # also think of that as time. imagine the seen areas grow by 1 tile
+        # for every 'time step', and the last shadows to be reached are the
+        # deepest and take the most time to get to.
+        que.put(None) # This is just a marker. Once this `None` is hit in the
+        # queue, we know to increment the `dist`
         while not que.empty():
             node = que.get()
-            dist += 1
-            for n in self.grid.get_neighbors(node):
-                if distances[n] == INF:
-                    distances[n] = dist
-                    que.put(n)
-        # TODO: reflect calculation in self.shadow_depths
-
+            if node is None:
+                dist += 1
+                if not que.empty():
+                    # put another layer marker
+                    que.put(None)
+            else:
+                for n in self.grid.get_neighbors(node):
+                    if self.shadow_depths[n] == INF:
+                        self.shadow_depths[n] = dist
+                        que.put(n)
+        # all done, now you can look in self.shadow_depths for the result
 
     # Returns the distance from the given node to the nearest node seen by the 
     # seeker.
     def distance_from_seen(self, node: GridNode) -> int:
-        pass
+        return self.shadow_depths[node]
+    
+    # return the maximum value from self.shadow_depths (that isn't INF)
+    def get_max_shadow_depth(self) -> int:
+        max_depth = 0
+        for depth in self.shadow_depths.values():
+            if depth < INF and depth > max_depth:
+                max_depth = depth
+        return max_depth
 
     # This function runs periodically. This is where the algorithm should
     # figure out where to go. See the parent class to see what's available.
@@ -58,10 +75,12 @@ class HiderA(Npc):
         here = self.grid.get_node(*self.position.to_grid_pos())
         if here is not None and not here.seen_by_seeker:
             self.emit_thought("I'm fine.")
-            return
-        self.emit_thought("Gotta run!")
+        else:
+            self.emit_thought("Gotta run!")
+        self.calculate_shadow_depths() # Need to do this before calling distance_from_seen() later
+        max_shdw_dpth = self.get_max_shadow_depth()
         # associate scores with nodes
-        self.candidates = [] # (node, score)
+        self.candidates.clear()
         for node in self.grid.all_nodes():
             if not node.is_wall and not node.seen_by_seeker:
                 # associate each candidate node with a score
@@ -73,22 +92,26 @@ class HiderA(Npc):
                 # shadowed node, but a better way is to do a BFS from every seen node simulatneously.
                 # This is not as hard as it sounds, as all it means is that I would make the 
                 # queue start off not with nothing, but with all the nodes seen by the seeker.
-                shadow_depth_score = self.distance_from_seen(node)
+                shadow_depth_score = 1 - (self.distance_from_seen(node) / float(max_shdw_dpth))
                 distance_score = self.position.distance_to(node.get_position()) / self.grid.size
-                self.candidates.append((node, shadow_depth_score + distance_score))
-        
+                self.candidates[node] = shadow_depth_score + distance_score
+
         # want to pick the candidate with the lowest score
-        self.candidates.sort(key=lambda x: x[1], reverse=False) # ascending
-        # get the lowest score candidate
-        
-        if len(self.candidates) > 0:
-            best_candidate = self.candidates[0][0]
+        best_candidate = min(self.candidates, key=self.candidates.get, default=None)
+        if best_candidate is not None:
             self.set_target(*best_candidate.get_position())
 
-    # for debug visuals for seeing what it's thinking
-    def think_draw(self, surface: pygame.Surface):
-        for node, score in self.candidates:
-            pos = node.get_position()
-            screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
-            radius = int(score * 20)  # Scale the score to a radius between 0 and 20
-            pygame.draw.circle(surface, (200, 200, 200), screen_pos, radius)
+    def draw(self, surface: pygame.Surface):
+        # Custom drawing code
+        # TODO: This class should be able to know whether the app is debug mode
+        # or not. these are good debugging visualizers. uncomment them to see.
+        # for node, score in self.candidates.items():
+        #     if score >= INF/2:
+        #         continue
+        #     pos = node.get_position()
+        #     screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
+        #     radius = int(score*20)  # Scale the score to a radius between 0 and 20
+        #     pygame.draw.circle(surface, (200, 200, 200), screen_pos, radius)
+        
+        # Call the base class's draw method
+        super().draw(surface)
