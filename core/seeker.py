@@ -7,16 +7,14 @@ from models.grid import Grid
 from models.vector import Vector2  
 
 class Seeker(Npc):
-    THINK_INTERVAL = 2.0 
-    MOVEMENT_SPEED = 1
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
+        self.auto_move = True
         
     def think(self):
         self.emit_thought("thinking...")
         # Random spot selection with a retry limit to avoid infinite loops
-        retries = 5
-        for _ in range(retries):
+        while True:
             x = random.randint(0, self.grid.size - 1)
             y = random.randint(0, self.grid.size - 1)
             if self.set_target(x, y):
@@ -27,10 +25,11 @@ class Seeker(Npc):
         # Handle manual movement if any movement keys are pressed
         if any(keys[key] for key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, 
                                      pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]):
+            self.auto_move = False
             self.last_key_time = 0.0 
             self.manual_move(keys)
         else:
-            if self.target:
+            if self.target and self.auto_move:
                 super().update(dt)  
 
         # Think periodically
@@ -51,25 +50,29 @@ class Seeker(Npc):
             self.move_right()
 
     def move_up(self):
-        x = self.position.x  
-        y = self.position.y  
-        if y > 0:  
-            self.position = Vector2(x, y - 1)
+        x, y = self.position.x, self.position.y
+        if y > 0:
+            node = self.grid.get_node(int(x), int(y - 1)) 
+            if node and not node.is_wall: 
+                self.position = Vector2(x, y - 1)
 
     def move_down(self):
-        x = self.position.x  
-        y = self.position.y  
-        if y < GRID_SIZE - 1:  
-            self.position = Vector2(x, y + 1)
+        x, y = self.position.x, self.position.y
+        if y < self.grid.size - 1:
+            node = self.grid.get_node(int(x), int(y + 1)) 
+            if node and not node.is_wall: 
+                self.position = Vector2(x, y + 1)
 
     def move_left(self):
-        x = self.position.x  
-        y = self.position.y  
-        if x > 0:  
-            self.position = Vector2(x - 1, y)
+        x, y = self.position.x, self.position.y
+        if x > 0:
+            node = self.grid.get_node(int(x - 1), int(y)) 
+            if node and not node.is_wall: 
+                self.position = Vector2(x - 1, y)
 
     def move_right(self):
-        x = self.position.x  
-        y = self.position.y
-        if x < GRID_SIZE - 1:  
-            self.position = Vector2(x + 1, y)
+        x, y = self.position.x, self.position.y
+        if x < self.grid.size - 1:
+            node = self.grid.get_node(int(x + 1), int(y)) 
+            if node and not node.is_wall: 
+                self.position = Vector2(x + 1, y)

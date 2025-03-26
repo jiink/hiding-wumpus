@@ -24,6 +24,7 @@ class Npc:
         self.think_timer = 0
         self.thought_text = None
         self.thought_timer = 0
+        self.auto_move = False
 
     def set_speed(self, speed: float):
         self.speed = speed
@@ -122,22 +123,30 @@ class Npc:
             center = self.grid.grid_to_screen(self.position.x, self.position.y),
             radius = self.grid.tile_size * 0.4
         )
-        # the target it's going towards
-        if self.target:
-            x, y = self.grid.grid_to_screen(self.target.x + 0.5, self.target.y + 0.5)
-            size = self.grid.tile_size * 0.4
-            # X shape
-            pygame.draw.line(surface, self.color, 
-                             (x - size, y - size), 
-                             (x + size, y + size), 
-                             width=3)
-            pygame.draw.line(surface, self.color, 
-                             (x + size, y - size), 
-                             (x - size, y + size), 
-                             width=3)
-        if self.thought_text:
-            font = pygame.font.Font(None, 24)
-            text_surface = font.render(self.thought_text, True, self.color)
-            text_rect = text_surface.get_rect(center=(self.grid.grid_to_screen(self.position.x, self.position.y - 1)))
-            text_surface.set_alpha(max(0, 255 * (1 - self.thought_timer / self.THOUGHT_DURATION)))
-            surface.blit(text_surface, text_rect)
+        if self.auto_move:
+            # the target it's going towards
+            if self.target:
+                x, y = self.grid.grid_to_screen(self.target.x + 0.5, self.target.y + 0.5)
+                size = self.grid.tile_size * 0.4
+                # X shape
+                pygame.draw.line(surface, self.color, 
+                                (x - size, y - size), 
+                                (x + size, y + size), 
+                                width=3)
+                pygame.draw.line(surface, self.color, 
+                                (x + size, y - size), 
+                                (x - size, y + size), 
+                                width=3)    
+            # Only draw the path if auto_move is enabled
+            if len(self.path) > 1:
+                points = [
+                    self.grid.grid_to_screen(node.x, node.y)
+                    for node in self.path
+                ]
+                pygame.draw.lines(surface, self.color, False, points, width=3)
+            if self.thought_text:
+                font = pygame.font.Font(None, 24)
+                text_surface = font.render(self.thought_text, True, self.color)
+                text_rect = text_surface.get_rect(center=(self.grid.grid_to_screen(self.position.x, self.position.y - 1)))
+                text_surface.set_alpha(max(0, 255 * (1 - self.thought_timer / self.THOUGHT_DURATION)))
+                surface.blit(text_surface, text_rect)

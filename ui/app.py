@@ -103,6 +103,7 @@ class App:
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
+            
             # Non pygame_gui stuff, just mouse clicks
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
@@ -120,6 +121,9 @@ class App:
             
              # Handling key events (WASD or Arrow keys)
             if event.type == pygame.KEYDOWN:
+                self.seeker_npc.auto_move = False 
+
+                # WSAD keys handling
                 if event.key == pygame.K_w:  # 'W' key for up movement
                     self.seeker_npc.move_up()
                 elif event.key == pygame.K_a:  # 'A' key for left movement
