@@ -1,9 +1,9 @@
+from math import inf
 import queue
 import random
 from typing import List, Tuple
 
 import pygame
-from constants import INF
 from core.npc import Npc
 from models.grid_node import GridNode
 
@@ -14,7 +14,7 @@ class HiderA(Npc):
             # this is an instance variable so we can see it 
             # drawn to the screen in think_draw()
             self.candidates: dict[GridNode, float] = {} # index by node to get score
-            self.shadow_depths: dict[GridNode, int] = {} # index by node to get depth
+            self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth
     
     # Finds the distances between every shadowed node and the nearest node seen
     # by the seeker and stores it in self.shadow_depths
@@ -24,10 +24,10 @@ class HiderA(Npc):
         que = queue.Queue() # could use [], but this has faster operations I heard
         all_nodes = self.grid.all_nodes()
         # Store distance from each node to a seen node. it's a dictionary!
-        self.shadow_depths: dict[GridNode, int] = {} # AKA distances
+        self.shadow_depths: dict[GridNode, float] = {} # AKA distances
         
         for i in range(0, len(all_nodes)):
-            self.shadow_depths[all_nodes[i]] = INF
+            self.shadow_depths[all_nodes[i]] = inf
         # Initialize the queue. usually in BFS we would start the queue with one
         # node, but we can just start it will all the nodes. Let the queue
         # begin with all seen nodes.
@@ -50,7 +50,7 @@ class HiderA(Npc):
                     que.put(None)
             else:
                 for n in self.grid.get_neighbors(node):
-                    if self.shadow_depths[n] == INF:
+                    if self.shadow_depths[n] == inf:
                         self.shadow_depths[n] = dist
                         que.put(n)
         # all done, now you can look in self.shadow_depths for the result
@@ -60,11 +60,11 @@ class HiderA(Npc):
     def distance_from_seen(self, node: GridNode) -> int:
         return self.shadow_depths[node]
     
-    # return the maximum value from self.shadow_depths (that isn't INF)
+    # return the maximum value from self.shadow_depths (that isn't inf)
     def get_max_shadow_depth(self) -> int:
         max_depth = 0
         for depth in self.shadow_depths.values():
-            if depth < INF and depth > max_depth:
+            if depth < inf and depth > max_depth:
                 max_depth = depth
         return max_depth
 
