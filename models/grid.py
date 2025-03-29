@@ -18,6 +18,12 @@ class Grid:
             for x in range(size):
                 row.append(GridNode(x, y))
             self.nodes.append(row)
+
+    # If you iterate over all the nodes using self.nodes, you'll need a nested
+    # for loop. Alternatively, you can use this flattening to iterate with
+    # one for loop
+    def all_nodes(self) -> List[GridNode]:
+        return [node for row in self.nodes for node in row]
     
     # Returns true if there is a solid tile between the two tile positions
     # on the grid. Used for calculating visibility.

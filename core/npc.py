@@ -112,7 +112,6 @@ class Npc:
     # this which causes the string to appear over the npc's head
     # for a bit then fade away
     def emit_thought(self, text: str):
-        print(text)
         self.thought_text = text
         self.thought_timer = 0
 
@@ -141,3 +140,4 @@ class Npc:
             text_rect = text_surface.get_rect(center=(self.grid.grid_to_screen(self.position.x, self.position.y - 1)))
             text_surface.set_alpha(max(0, 255 * (1 - self.thought_timer / self.THOUGHT_DURATION)))
             surface.blit(text_surface, text_rect)
+        
