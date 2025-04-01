@@ -3,6 +3,7 @@ from enum import Enum, auto
 import pygame
 import pygame_gui
 
+from pygame_gui.elements import UIButton, UITextEntryLine, UIDropDownMenu
 from constants import *
 from core.pathfinder import Pathfinder
 from core.seeker_npc import SeekerNPC
@@ -37,6 +38,8 @@ class App:
         self.click_mode = ClickMode.TILE
         self.debug_mode = True
         self.create_ui()
+        self.mouse_down = False
+        self.last_toggle_pos = None
     
     # This defines all the buttons that show up and what they do.
     # See the `handle_events` function to find where an action is taken
@@ -81,25 +84,64 @@ class App:
             value_range=(1.0, 10.0),
             manager=self.ui_manager
         )
-        # Save Level Button
+
+        right_x = WINDOW_WIDTH - 270  # Align to right edge
+        # Text input for level name
+        self.level_name_input = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect(right_x + btn_w + btn_mn, btn_mn, 150, btn_h),
+            manager=self.ui_manager
+        )
+        self.level_name_input.set_text("NAME")  # Default name
+
+        # Dropdown for saved levels
+        saved_levels = LevelManager.list_saved_levels()
+        if not saved_levels:  # Avoid empty dropdown
+            saved_levels = ["No levels"]
+            default_option = "No levels"
+        else:
+            default_option = saved_levels[0]
+        self.level_dropdown = pygame_gui.elements.UIDropDownMenu(
+            options_list=saved_levels,
+            starting_option=default_option,
+            relative_rect=pygame.Rect(right_x + btn_w + btn_mn, btn_mn + btn_h, 150, btn_h),
+            manager=self.ui_manager
+        )
+
+        # Save button
         self.save_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn, 
-                                    btn_mn, 
-                                    btn_w, 
-                                    btn_h),
+            relative_rect=pygame.Rect(right_x, btn_mn, btn_w, btn_h),
             text="Save Level",
             manager=self.ui_manager
         )
-        
-        # Load Level Button
+        # Load button
         self.load_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(WINDOW_WIDTH - btn_w - btn_mn,
-                                    btn_mn * 2 + btn_h,
-                                    btn_w,
-                                    btn_h),
+            relative_rect=pygame.Rect(right_x, btn_mn + btn_h, btn_w, btn_h),
             text="Load Level",
             manager=self.ui_manager
         )
+
+    def refresh_dropdown(self):
+        """Updates the dropdown with current saved levels"""
+        saved_levels = LevelManager.list_saved_levels()
+        if not saved_levels:
+            saved_levels = ["No levels"]
+        
+        # Get current selection if it exists
+        current_selection = None
+        if hasattr(self, 'level_dropdown'):
+            current_selection = self.level_dropdown.selected_option
+            self.level_dropdown.kill()
+        
+        # Create new dropdown
+        self.level_dropdown = pygame_gui.elements.UIDropDownMenu(
+            options_list=saved_levels,
+            starting_option=saved_levels[len(saved_levels)-1],
+            relative_rect=pygame.Rect(WINDOW_WIDTH - 270 + 110, 40, 150, 30),
+            manager=self.ui_manager
+        )
+        # Maintain the previous selection if it still exists
+        if current_selection in saved_levels:
+            self.level_dropdown.selected_option = current_selection
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -118,29 +160,50 @@ class App:
                         self.debug_mode = not self.debug_mode
                         self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
                     elif event.ui_element == self.save_button:
-                        LevelManager.save_level(self.grid, self.seeker_npc, Vector2)
+                        level_name = self.level_name_input.get_text()
+                        if level_name:
+                            LevelManager.save_level(self.grid, self.seeker_npc, Vector2, level_name)
+                            self.refresh_dropdown()
+                            self.level_name_input.set_text(level_name)
                     elif event.ui_element == self.load_button:
-                        LevelManager.load_level(self.grid, self.seeker_npc, Vector2)
+                        selected_level = self.level_dropdown.selected_option
+                        if isinstance(selected_level, tuple):  # Handle tuple case
+                            selected_level = selected_level[0]
+                        if selected_level != "No levels":
+                            LevelManager.load_level(self.grid, self.seeker_npc, Vector2, selected_level)
 
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
             # Non pygame_gui stuff, just mouse clicks
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                mouse_pos = pygame.mouse.get_pos()
-                # For clicks within the grid, not the UI
-                if mouse_pos[1] > UI_HEIGHT:
-                    # the asterisk notation unpacks mouse_pos into
-                    # 2 separate arguments
-                    grid_x, grid_y = self.grid.screen_to_grid(*mouse_pos)
-                    if self.click_mode == ClickMode.TILE:
-                        self.grid.toggle_wall(grid_x, grid_y)
-                        # Path needs to be updated since the envrionment changed.
-                        self.seeker_npc.update_path()
-                    if self.click_mode == ClickMode.TARGET:
-                        self.seeker_npc.set_target(grid_x, grid_y)
+                self.mouse_down = True
+                self.handle_tile_click()
+            # Handle mouse button up
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                self.mouse_down = False
+            # Handle mouse motion while button is held down
+            if event.type == pygame.MOUSEMOTION and self.mouse_down:
+                self.handle_tile_click()            
+
             self.ui_manager.process_events(event) # pygame_gui requires this
-    
+
+    def handle_tile_click(self):
+        """Handle tile clicks based on current mode"""
+        mouse_pos = pygame.mouse.get_pos()
+        # For clicks within the grid, not the UI
+        if mouse_pos[1] > UI_HEIGHT:
+            grid_x, grid_y = self.grid.screen_to_grid(*mouse_pos)
+            current_pos = (grid_x, grid_y)
+            # Only proceed if we moved to a new tile
+            if current_pos != self.last_toggle_pos:
+                self.last_toggle_pos = current_pos
+                if self.click_mode == ClickMode.TILE:
+                    self.grid.toggle_wall(grid_x, grid_y)
+                    self.seeker_npc.update_path()
+                elif self.click_mode == ClickMode.TARGET:
+                    self.seeker_npc.set_target(grid_x, grid_y)
+
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
         self.ui_manager.update(dt) # pygame_gui requires this
