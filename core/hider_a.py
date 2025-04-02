@@ -93,7 +93,10 @@ class HiderA(Npc):
                 # shadowed node, but a better way is to do a BFS from every seen node simulatneously.
                 # This is not as hard as it sounds, as all it means is that I would make the 
                 # queue start off not with nothing, but with all the nodes seen by the seeker.
-                shadow_depth_score = 1 - (self.distance_from_seen(node) / float(max_shdw_dpth))
+                if max_shdw_dpth > 0:
+                    shadow_depth_score = 1 - (self.distance_from_seen(node) / float(max_shdw_dpth))
+                else:
+                    shadow_depth_score = 0
                 distance_score = self.position.distance_to(node.get_position()) / self.grid.size
                 self.candidates[node] = shadow_depth_score + distance_score
 
@@ -102,17 +105,20 @@ class HiderA(Npc):
         if best_candidate is not None:
             self.set_target(*best_candidate.get_position())
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface, debug: bool):
         # Custom drawing code
-        # TODO: This class should be able to know whether the app is debug mode
-        # or not. these are good debugging visualizers. uncomment them to see.
-        # for node, score in self.candidates.items():
-        #     if score >= INF/2:
-        #         continue
-        #     pos = node.get_position()
-        #     screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
-        #     radius = int(score*20)  # Scale the score to a radius between 0 and 20
-        #     pygame.draw.circle(surface, (200, 200, 200), screen_pos, radius)
+        if debug:
+            for node, score in self.candidates.items():
+                if score >= inf/2:
+                    continue
+                pos = node.get_position()
+                screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
+                radius = int(score * 20)  # Scale the score to a radius between 0 and 20
+                
+                # Create a translucent surface for the circle
+                circle_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+                pygame.draw.circle(circle_surface, (200, 200, 200, 20), (radius, radius), radius)  # RGBA with alpha
+                surface.blit(circle_surface, (screen_pos[0] - radius, screen_pos[1] - radius))
         
         # Call the base class's draw method
-        super().draw(surface)
+        super().draw(surface, debug)
