@@ -113,7 +113,6 @@ class Npc:
     # this which causes the string to appear over the npc's head
     # for a bit then fade away
     def emit_thought(self, text: str):
-        print(text)
         self.thought_text = text
         self.thought_timer = 0
 

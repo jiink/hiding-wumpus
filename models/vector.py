@@ -18,6 +18,8 @@ class Vector2:
         return Vector2(self.x * scalar, self.y * scalar)
     
     def distance_to(self, other) -> float:
+        if isinstance(other, tuple):
+            other = Vector2(*other)
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
     
     def length(self) -> float:
