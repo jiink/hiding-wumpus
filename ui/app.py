@@ -33,11 +33,12 @@ class App:
         # Initialize our non-pygame stuff
         self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
-        self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=False)
+        self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         # TODO: some way to change the hider algorithms during runtime
         self.hider_npc = HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
         self.click_mode = ClickMode.TILE
         self.debug_mode = True
+        self.seeker_manual_mode = False # False = AI controlled, True = keyboard controlled
         self.create_ui()
     
     # This defines all the buttons that show up and what they do.
@@ -83,6 +84,12 @@ class App:
             value_range=(1.0, 10.0),
             manager=self.ui_manager
         )
+        # Toggle seeker mode (manual or AI)
+        self.seeker_manual_mode_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(btn_mn * 4 + btn_w * 3, btn_mn, btn_w, btn_h),
+            text="Seeker: CPU",
+            manager=self.ui_manager
+        )
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -100,6 +107,10 @@ class App:
                     elif event.ui_element == self.debug_button:
                         self.debug_mode = not self.debug_mode
                         self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
+                    elif event.ui_element == self.seeker_manual_mode_button:
+                        self.seeker_manual_mode = not self.seeker_manual_mode
+                        self.seeker_npc.auto_move = not self.seeker_manual_mode
+                        self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
@@ -118,31 +129,6 @@ class App:
                         self.seeker_npc.update_path()
                     if self.click_mode == ClickMode.TARGET:
                         self.seeker_npc.set_target(grid_x, grid_y)
-            
-             # Handling key events (WASD or Arrow keys)
-            if event.type == pygame.KEYDOWN:
-                self.seeker_npc.auto_move = False 
-
-                # WSAD keys handling
-                if event.key == pygame.K_w:  # 'W' key for up movement
-                    self.seeker_npc.move_up()
-                elif event.key == pygame.K_a:  # 'A' key for left movement
-                    self.seeker_npc.move_left()
-                elif event.key == pygame.K_s:  # 'S' key for down movement
-                    self.seeker_npc.move_down()
-                elif event.key == pygame.K_d:  # 'D' key for right movement
-                    self.seeker_npc.move_right()
-
-                # Arrow keys handling
-                elif event.key == pygame.K_UP:  # Up Arrow key
-                    self.seeker_npc.move_up()
-                elif event.key == pygame.K_LEFT:  # Left Arrow key
-                    self.seeker_npc.move_left()
-                elif event.key == pygame.K_DOWN:  # Down Arrow key
-                    self.seeker_npc.move_down()
-                elif event.key == pygame.K_RIGHT:  # Right Arrow key
-                    self.seeker_npc.move_right()
-
             # Process pygame_gui events
             self.ui_manager.process_events(event)
 

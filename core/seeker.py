@@ -21,58 +21,33 @@ class Seeker(Npc):
                 break
 
     def update(self, dt: float):
-        keys = pygame.key.get_pressed()
-        # Handle manual movement if any movement keys are pressed
-        if any(keys[key] for key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, 
-                                     pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]):
-            self.auto_move = False
-            self.last_key_time = 0.0 
-            self.manual_move(keys)
+        if self.auto_move:
+            super().update(dt) 
         else:
-            if self.target and self.auto_move:
-                super().update(dt)  
-
-        # Think periodically
-        self.think_timer += dt
-        if self.think_timer >= self.THINK_INTERVAL:
-            self.think()
-            self.think_timer = 0.0
+            keys = pygame.key.get_pressed()
+            # Handle manual movement if any movement keys are pressed
+            if not self.auto_move and any(keys[key] for key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, 
+                                        pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]):
+                self.last_key_time = 0.0 
+                self.manual_move(keys)
+                
 
     def manual_move(self, keys):
-        # manual movement using WASD or Arrow keys.
-        if keys[pygame.K_w]:
-            self.move_up()
-        if keys[pygame.K_s]:
-            self.move_down()
-        if keys[pygame.K_a]:
-            self.move_left()
-        if keys[pygame.K_d]:
-            self.move_right()
+        # Manual movement using WASD or Arrow keys.
+        directions = {
+            pygame.K_w: (0, -1),
+            pygame.K_s: (0, 1),
+            pygame.K_a: (-1, 0),
+            pygame.K_d: (1, 0)
+        }
+        for key, (dx, dy) in directions.items():
+            if keys[key]:
+                self.move(dx, dy)
 
-    def move_up(self):
+    def move(self, dx, dy):
         x, y = self.position.x, self.position.y
-        if y > 0:
-            node = self.grid.get_node(int(x), int(y - 1)) 
-            if node and not node.is_wall: 
-                self.position = Vector2(x, y - 1)
-
-    def move_down(self):
-        x, y = self.position.x, self.position.y
-        if y < self.grid.size - 1:
-            node = self.grid.get_node(int(x), int(y + 1)) 
-            if node and not node.is_wall: 
-                self.position = Vector2(x, y + 1)
-
-    def move_left(self):
-        x, y = self.position.x, self.position.y
-        if x > 0:
-            node = self.grid.get_node(int(x - 1), int(y)) 
-            if node and not node.is_wall: 
-                self.position = Vector2(x - 1, y)
-
-    def move_right(self):
-        x, y = self.position.x, self.position.y
-        if x < self.grid.size - 1:
-            node = self.grid.get_node(int(x + 1), int(y)) 
-            if node and not node.is_wall: 
-                self.position = Vector2(x + 1, y)
+        new_x, new_y = x + dx, y + dy
+        if 0 <= new_x < self.grid.size and 0 <= new_y < self.grid.size:
+            node = self.grid.get_node(int(new_x), int(new_y))
+            if node and not node.is_wall:
+                self.position = Vector2(new_x, new_y)
