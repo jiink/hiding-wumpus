@@ -10,11 +10,12 @@ from models.grid_node import GridNode
 class HiderA(Npc):
     
     def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            # this is an instance variable so we can see it 
-            # drawn to the screen in think_draw()
-            self.candidates: dict[GridNode, float] = {} # index by node to get score
-            self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth
+        super().__init__(*args, **kwargs)
+        self.auto_move = True
+        # this is an instance variable so we can see it 
+        # drawn to the screen in think_draw()
+        self.candidates: dict[GridNode, float] = {} # index by node to get score
+        self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth
     
     # Finds the distances between every shadowed node and the nearest node seen
     # by the seeker and stores it in self.shadow_depths
@@ -69,11 +70,7 @@ class HiderA(Npc):
         return max_depth
 
     # This function runs periodically. This is where the algorithm should
-    # figure out where to go. See the parent class to see what's available.
-    def __init__(self, grid, pathfinder, color, can_think=True):
-        super().__init__(grid, pathfinder, color, can_think)
-        self.auto_move = True
-        
+    # figure out where to go. See the parent class to see what's available.        
     def think(self):
         # if it's already in an unseen area, don't do anything
         here = self.grid.get_node(*self.position.to_grid_pos())
