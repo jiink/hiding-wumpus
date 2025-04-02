@@ -108,19 +108,29 @@ class Grid:
         return tuple(min(c1 + c2, 255) for c1, c2 in zip(color1, color2))
     
     # In pygame, a "surface" is like a render texture in other frameworks/engines.
-    def draw(self, surface: pygame.Surface):
+    # If partial is true, then tiles will either be white if in view of seeker, or 
+    # black otherwise. That's meant for human seeker to not have unfair visibility.
+    def draw(self, surface: pygame.Surface, partial: bool):
         # tiles
         for y in range(self.size):
             for x in range(self.size):
                 node = self.nodes[y][x]
-                if node.is_wall:
-                    color = WALL_TILE_COLOR
+                if partial:
+                    if node.seen_by_seeker:
+                        color = (190, 190, 190)
+                    else:
+                        color = (0, 0, 0)  # Black for unseen tiles
+                    if node.is_wall:
+                        color = (80, 60, 190)
                 else:
-                    color = EMPTY_TILE_COLOR
-                if node.seen_by_seeker:
-                    color = self.add_colors(color, (0, 0, 50))
-                if node.seen_by_hider:
-                    color = self.add_colors(color, (50, 0, 0))
+                    if node.is_wall:
+                        color = WALL_TILE_COLOR
+                    else:
+                        color = EMPTY_TILE_COLOR
+                    if node.seen_by_seeker:
+                        color = self.add_colors(color, (0, 0, 50))
+                    if node.seen_by_hider:
+                        color = self.add_colors(color, (50, 0, 0))
                 
                 rect = pygame.Rect(
                     *self.grid_to_screen(x, y),

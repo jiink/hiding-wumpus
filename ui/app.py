@@ -152,11 +152,17 @@ class App:
     
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
-        self.grid.draw(self.screen)
+        self.grid.draw(self.screen, self.seeker_manual_mode)
         if self.debug_mode:
             self.pathfinder.draw_debug(self.screen)
         self.seeker_npc.draw(self.screen)
-        self.hider_npc.draw(self.screen)
+        # If you're controlling the seeker, you shouldn't see the
+        # hider if it's out of line of sight
+        if self.seeker_manual_mode:
+            if not self.grid.is_wall_between(self.seeker_npc.position.to_grid_pos(), self.hider_npc.position.to_grid_pos()):
+                self.hider_npc.draw(self.screen)
+        else:
+            self.hider_npc.draw(self.screen)
         self.ui_manager.draw_ui(self.screen)
         # Now show the frame
         pygame.display.flip()
