@@ -29,10 +29,10 @@ class Seeker(Npc):
             if not self.auto_move and any(keys[key] for key in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, 
                                         pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]):
                 self.last_key_time = 0.0 
-                self.manual_move(keys)
+                self.manual_move(keys, dt)
                 
 
-    def manual_move(self, keys):
+    def manual_move(self, keys, dt):
         # Manual movement using WASD or Arrow keys.
         directions = {
             pygame.K_w: (0, -1),
@@ -42,11 +42,19 @@ class Seeker(Npc):
         }
         for key, (dx, dy) in directions.items():
             if keys[key]:
-                self.move(dx, dy)
+                self.move(dx, dy, dt)
 
-    def move(self, dx, dy):
-        x, y = self.position.x, self.position.y
-        new_x, new_y = x + dx, y + dy
+    def move(self, dx, dy, dt):
+        # Normalize it so going diagonal isn't faster
+        magnitude = (dx**2 + dy**2)**0.5
+        if magnitude > 0:
+            dx /= magnitude
+            dy /= magnitude
+        dx *= self.speed * dt
+        dy *= self.speed * dt
+        new_x = self.position.x + dx
+        new_y = self.position.y + dy
+        # Check boundaries and obstacles
         if 0 <= new_x < self.grid.size and 0 <= new_y < self.grid.size:
             node = self.grid.get_node(int(new_x), int(new_y))
             if node and not node.is_wall:
