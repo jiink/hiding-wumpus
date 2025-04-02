@@ -103,6 +103,7 @@ class App:
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
+            
             # Non pygame_gui stuff, just mouse clicks
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
@@ -117,7 +118,33 @@ class App:
                         self.seeker_npc.update_path()
                     if self.click_mode == ClickMode.TARGET:
                         self.seeker_npc.set_target(grid_x, grid_y)
-            self.ui_manager.process_events(event) # pygame_gui requires this
+            
+             # Handling key events (WASD or Arrow keys)
+            if event.type == pygame.KEYDOWN:
+                self.seeker_npc.auto_move = False 
+
+                # WSAD keys handling
+                if event.key == pygame.K_w:  # 'W' key for up movement
+                    self.seeker_npc.move_up()
+                elif event.key == pygame.K_a:  # 'A' key for left movement
+                    self.seeker_npc.move_left()
+                elif event.key == pygame.K_s:  # 'S' key for down movement
+                    self.seeker_npc.move_down()
+                elif event.key == pygame.K_d:  # 'D' key for right movement
+                    self.seeker_npc.move_right()
+
+                # Arrow keys handling
+                elif event.key == pygame.K_UP:  # Up Arrow key
+                    self.seeker_npc.move_up()
+                elif event.key == pygame.K_LEFT:  # Left Arrow key
+                    self.seeker_npc.move_left()
+                elif event.key == pygame.K_DOWN:  # Down Arrow key
+                    self.seeker_npc.move_down()
+                elif event.key == pygame.K_RIGHT:  # Right Arrow key
+                    self.seeker_npc.move_right()
+
+            # Process pygame_gui events
+            self.ui_manager.process_events(event)
 
     def update_visibility(self):
         # A gridnode is marked not visible if there is a wall tile between its

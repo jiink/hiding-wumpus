@@ -70,6 +70,10 @@ class HiderA(Npc):
 
     # This function runs periodically. This is where the algorithm should
     # figure out where to go. See the parent class to see what's available.
+    def __init__(self, grid, pathfinder, color, can_think=True):
+        super().__init__(grid, pathfinder, color, can_think)
+        self.auto_move = True
+        
     def think(self):
         # if it's already in an unseen area, don't do anything
         here = self.grid.get_node(*self.position.to_grid_pos())
