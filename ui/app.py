@@ -133,7 +133,7 @@ class App:
             manager=self.ui_manager
         )
 
-    def refresh_dropdown(self):
+    def refresh_dropdown(self, select_level=None):
         """Updates the dropdown with current saved levels"""
         saved_levels = LevelManager.list_saved_levels()
         if not saved_levels:
@@ -145,10 +145,11 @@ class App:
             current_selection = self.level_dropdown.selected_option
             self.level_dropdown.kill()
         
+
         # Create new dropdown
         self.level_dropdown = pygame_gui.elements.UIDropDownMenu(
             options_list=saved_levels,
-            starting_option=saved_levels[len(saved_levels)-1],
+            starting_option=select_level if select_level else saved_levels[0],
             relative_rect=pygame.Rect(WINDOW_WIDTH - 270 + 110, 40, 150, 30),
             manager=self.ui_manager
         )
@@ -180,7 +181,7 @@ class App:
                         level_name = self.level_name_input.get_text()
                         if level_name:
                             LevelManager.save_level(self.grid, self.seeker_npc, Vector2, level_name)
-                            self.refresh_dropdown()
+                            self.refresh_dropdown(select_level=level_name)
                             self.level_name_input.set_text(level_name)
                     elif event.ui_element == self.load_button:
                         selected_level = self.level_dropdown.selected_option

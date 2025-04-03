@@ -109,16 +109,22 @@ class HiderA(Npc):
         # Custom drawing code
         if debug:
             for node, score in self.candidates.items():
-                if score >= inf/2:
+            # Skip infinite scores and nodes that are walls or seen by seeker
+                if score == float('inf') or node.is_wall or node.seen_by_seeker:
                     continue
+                    
                 pos = node.get_position()
                 screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
-                radius = int(score * 20)  # Scale the score to a radius between 0 and 20
                 
+                # Ensure score is finite and within reasonable bounds
+                try:
+                    radius = int(min(20, max(0, score * 20)))  # Clamp between 0 and 20
+                except (ValueError, OverflowError):
+                    continue  # Skip if score is still problematic
+                    
                 # Create a translucent surface for the circle
                 circle_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-                pygame.draw.circle(circle_surface, (200, 200, 200, 20), (radius, radius), radius)  # RGBA with alpha
+                pygame.draw.circle(circle_surface, (200, 200, 200, 20), (radius, radius), radius)
                 surface.blit(circle_surface, (screen_pos[0] - radius, screen_pos[1] - radius))
-        
         # Call the base class's draw method
         super().draw(surface, debug)
