@@ -105,23 +105,23 @@ class HiderA(Npc):
         if best_candidate is not None:
             self.set_target(*best_candidate.get_position())
 
+    @staticmethod
+    def clamp(value, min_value, max_value):
+        return max(min(value, max_value), min_value)
+
     def draw(self, surface: pygame.Surface, debug: bool):
         # Custom drawing code
         if debug:
             for node, score in self.candidates.items():
             # Skip infinite scores and nodes that are walls or seen by seeker
-                if score == float('inf') or node.is_wall or node.seen_by_seeker:
+                if score == float('inf'):
                     continue
-                    
                 pos = node.get_position()
                 screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
-                
-                # Ensure score is finite and within reasonable bounds
                 try:
-                    radius = int(min(20, max(0, score * 20)))  # Clamp between 0 and 20
+                    radius = self.clamp(score*20, 0, 500)
                 except (ValueError, OverflowError):
-                    continue  # Skip if score is still problematic
-                    
+                     continue  # Skip if score is still problematic
                 # Create a translucent surface for the circle
                 circle_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
                 pygame.draw.circle(circle_surface, (200, 200, 200, 20), (radius, radius), radius)
