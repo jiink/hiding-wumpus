@@ -1,4 +1,5 @@
 from math import inf
+import math
 import queue
 import random
 from typing import List, Tuple
@@ -123,8 +124,6 @@ class HiderA(Npc):
             # nodes within line of sight of the this guy. maybe we can compare them in analysis.
             if not node.is_wall:
                 # associate each candidate node with a score. lower = better
-                # Big disadvantage for seen spaces -- last resort
-                seen_score = 1 if node.seen_by_seeker else 0
                 # Big part of it is how deep in the shadow it is -- that is,
                 # going to a spot that's far from a visible area. I found out
                 # This is an uninformed search problem called "distance transform"!
@@ -141,9 +140,10 @@ class HiderA(Npc):
                 wall_dist_score = 1 if node.seen_by_seeker else self.distance_from_wall(node) * 0.1 
                 distance_score = self.position.distance_to(node.get_position()) / self.grid.size
                 # TODO: stench score
+                
                 # TODO: right now it does nothing if it's caught in a bad spot and there aren't any good candidates. in this case, let it flee.
                 # todo: feel free to multiply each term by something to balance things out
-                self.candidates[node] = shadow_depth_score + distance_score + seen_score + wall_dist_score
+                self.candidates[node] = shadow_depth_score + distance_score + + wall_dist_score
 
         # want to pick the candidate with the lowest score
         best_candidate = min(self.candidates, key=self.candidates.get, default=None)
@@ -157,19 +157,35 @@ class HiderA(Npc):
     def draw(self, surface: pygame.Surface, debug: bool):
         # Custom drawing code
         if debug:
-            for node, score in self.candidates.items():
-            # Skip infinite scores and nodes that are walls or seen by seeker
-                if score == float('inf'):
-                    continue
-                pos = node.get_position()
-                screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
-                try:
-                    radius = self.clamp(score*20, 0, 500)
-                except (ValueError, OverflowError):
-                     continue  # Skip if score is still problematic
-                # Create a translucent surface for the circle
-                circle_surface = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-                pygame.draw.circle(circle_surface, (200, 200, 200, 20), (radius, radius), radius)
-                surface.blit(circle_surface, (screen_pos[0] - radius, screen_pos[1] - radius))
+            # Normalize scores for color mapping
+            scores = [score for score in self.candidates.values() if score != float('inf')]
+            if len(scores) > 0:
+                min_score, max_score = min(scores), max(scores)
+                range_score = max_score - min_score if max_score > min_score else 1
+
+                for node, score in self.candidates.items():
+                    # Skip infinite scores and nodes that are walls or seen by seeker
+                    if score == float('inf'):
+                        continue
+                    pos = node.get_position()
+                    screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
+
+                    # Map score to color (gradient from green to red)
+                    normalized_score = (score - min_score) / range_score
+                    if math.isnan(normalized_score):  # Check for NaN explicitly
+                        continue
+                    red = int(normalized_score * 255)
+                    green = int((1 - normalized_score) * 255)
+                    color = (red, green, 0)  # RGB color
+
+                    # Draw a small square at the node's position
+                    rect_size = 5  # Size of the square
+                    rect = pygame.Rect(
+                        screen_pos[0] - rect_size // 2,
+                        screen_pos[1] - rect_size // 2,
+                        rect_size,
+                        rect_size
+                    )
+                    pygame.draw.rect(surface, color, rect)
         # Call the base class's draw method
         super().draw(surface, debug)
