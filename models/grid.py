@@ -73,7 +73,8 @@ class Grid:
         return True
     
     # Returns the nodes surrounding the given node. 
-    def get_neighbors(self, node: GridNode) -> List[GridNode]:
+    # `wall_ok`: When true, returns includes wall tiles as neighbors
+    def get_neighbors(self, node: GridNode, wall_ok: bool = False) -> List[GridNode]:
         neighbors = []
         # Including diagonals (8 directions)
         for dx in [-1, 0, 1]:
@@ -83,7 +84,7 @@ class Grid:
                 nx, ny = node.x + dx, node.y + dy
                 if self.is_valid_position(nx, ny):
                     neighbor = self.nodes[ny][nx]
-                    if not neighbor.is_wall:
+                    if wall_ok or not neighbor.is_wall:
                         neighbors.append(neighbor)
         return neighbors
 

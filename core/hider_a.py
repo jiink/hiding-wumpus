@@ -15,7 +15,8 @@ class HiderA(Npc):
         # this is an instance variable so we can see it 
         # drawn to the screen in think_draw()
         self.candidates: dict[GridNode, float] = {} # index by node to get score
-        self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth
+        self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth (distance from seen)
+        self.wall_distances: dict[GridNode, float] = {} # index by node to get distance
     
     # Finds the distances between every shadowed node and the nearest node seen
     # by the seeker and stores it in self.shadow_depths
@@ -55,11 +56,44 @@ class HiderA(Npc):
                         self.shadow_depths[n] = dist
                         que.put(n)
         # all done, now you can look in self.shadow_depths for the result
+    
+    # This is pretty much a copy paste from calculate_shadow_depths
+    # Finds the distances between every shadowed node and the nearest node seen
+    # by the seeker and stores it in self.shadow_depths
+    def calculate_wall_distances(self) -> None:
+        # See calculate_shadow_depths for details and comments
+        que = queue.Queue()
+        all_nodes = self.grid.all_nodes()
+        self.wall_distances: dict[GridNode, float] = {}
+        for i in range(0, len(all_nodes)):
+            self.wall_distances[all_nodes[i]] = inf
+        # Initialize the queue.
+        for node in all_nodes:
+            if node.seen_by_seeker:
+                que.put(node)
+                self.wall_distances[node] = 0
+        dist = 1 # This will increment for every level of BFS done.
+        que.put(None) # This is just a marker.
+        while not que.empty():
+            node = que.get()
+            if node is None:
+                dist += 1
+                if not que.empty():
+                    que.put(None) # put another layer marker
+            else:
+                for n in self.grid.get_neighbors(node, True):
+                    if self.wall_distances[n] == inf:
+                        self.wall_distances[n] = dist
+                        que.put(n)
 
     # Returns the distance from the given node to the nearest node seen by the 
     # seeker.
     def distance_from_seen(self, node: GridNode) -> int:
         return self.shadow_depths[node]
+    
+    # Returns the distance from the given node to the nearest wall.
+    def distance_from_wall(self, node: GridNode) -> int:
+        return self.wall_distances[node]
     
     # return the maximum value from self.shadow_depths (that isn't inf)
     def get_max_shadow_depth(self) -> int:
@@ -79,12 +113,18 @@ class HiderA(Npc):
         else:
             self.emit_thought("Gotta run!")
         self.calculate_shadow_depths() # Need to do this before calling distance_from_seen() later
+        self.calculate_wall_distances() # Need to do this before calling distance_from_wall() later
         max_shdw_dpth = self.get_max_shadow_depth()
         # associate scores with nodes
         self.candidates.clear()
         for node in self.grid.all_nodes():
-            if not node.is_wall and not node.seen_by_seeker:
-                # associate each candidate node with a score
+            # Only consider these kinds of nodes. If you want to increase how partially
+            # observable this system is, you could add `and node.seen_by_hider` to only consider
+            # nodes within line of sight of the this guy. maybe we can compare them in analysis.
+            if not node.is_wall:
+                # associate each candidate node with a score. lower = better
+                # Big disadvantage for seen spaces -- last resort
+                seen_score = 1 if node.seen_by_seeker else 0
                 # Big part of it is how deep in the shadow it is -- that is,
                 # going to a spot that's far from a visible area. I found out
                 # This is an uninformed search problem called "distance transform"!
@@ -97,8 +137,13 @@ class HiderA(Npc):
                     shadow_depth_score = 1 - (self.distance_from_seen(node) / float(max_shdw_dpth))
                 else:
                     shadow_depth_score = 0
+                # only care about hugging walls if it's in the shadow
+                wall_dist_score = 1 if node.seen_by_seeker else self.distance_from_wall(node) * 0.1 
                 distance_score = self.position.distance_to(node.get_position()) / self.grid.size
-                self.candidates[node] = shadow_depth_score + distance_score
+                # TODO: stench score
+                # TODO: right now it does nothing if it's caught in a bad spot and there aren't any good candidates. in this case, let it flee.
+                # todo: feel free to multiply each term by something to balance things out
+                self.candidates[node] = shadow_depth_score + distance_score + seen_score + wall_dist_score
 
         # want to pick the candidate with the lowest score
         best_candidate = min(self.candidates, key=self.candidates.get, default=None)
