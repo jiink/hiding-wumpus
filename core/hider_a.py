@@ -159,16 +159,17 @@ class HiderA(Npc):
     def draw(self, surface: pygame.Surface, debug: bool):
         # Custom drawing code
         if debug:
+            # remove any +/-infs
+            filtered_candidates = {node: score for node, score in self.candidates.items() if score != float('inf') and score != float('-inf')}
             # Normalize scores for color mapping
-            scores = [score for score in self.candidates.values() if score != float('inf')]
+            scores = list(filtered_candidates.values())
             if len(scores) > 0:
-                min_score, max_score = min(scores), max(scores)
-                range_score = max_score - min_score if max_score > min_score else 1
-
-                for node, score in self.candidates.items():
-                    # Skip infinite scores and nodes that are walls or seen by seeker
-                    if score == float('inf'):
-                        continue
+                min_score = min(scores)
+                max_score = max(scores)
+                range_score = max_score - min_score
+                if range_score == 0:
+                    return  # avoid divide by 0
+                for node, score in filtered_candidates.items():
                     pos = node.get_position()
                     screen_pos = self.grid.grid_to_screen(pos[0] + 0.5, pos[1] + 0.5)
 
