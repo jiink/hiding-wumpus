@@ -38,8 +38,7 @@ class Npc:
         node = self.grid.get_node(x, y)
         if node and not node.is_wall:
             self.target = Vector2(x, y)
-            self.update_path()
-            return True
+            return self.update_path()
         else:
             return False
 

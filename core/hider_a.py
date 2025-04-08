@@ -145,10 +145,12 @@ class HiderA(Npc):
                 # todo: feel free to multiply each term by something to balance things out
                 self.candidates[node] = shadow_depth_score + distance_score + + wall_dist_score
 
-        # want to pick the candidate with the lowest score
-        best_candidate = min(self.candidates, key=self.candidates.get, default=None)
-        if best_candidate is not None:
-            self.set_target(*best_candidate.get_position())
+        # want to pick the candidate with the lowest score. If it doesn't
+        # work, pick the next best, and so on.
+        sorted_candidates = sorted(self.candidates.items(), key=lambda item: item[1])
+        for candidate, _ in sorted_candidates:
+            if self.set_target(*candidate.get_position()):
+                break
 
     @staticmethod
     def clamp(value, min_value, max_value):
