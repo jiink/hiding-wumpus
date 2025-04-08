@@ -79,13 +79,22 @@ class Grid:
         # Including diagonals (8 directions)
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
+                if dx == 0 and dy == 0: # the center is not a neighbor
                     continue
                 nx, ny = node.x + dx, node.y + dy
                 if self.is_valid_position(nx, ny):
                     neighbor = self.nodes[ny][nx]
-                    if wall_ok or not neighbor.is_wall:
-                        neighbors.append(neighbor)
+                    if not wall_ok and neighbor.is_wall:
+                        continue
+                    # tricky part: don't want paths to go through diagonal walls.
+                    if dx != 0 and dy != 0 \
+                    and self.get_node(node.x + dx, node.y) and self.get_node(node.x, node.y + dy) \
+                    and self.get_node(node.x + dx, node.y).is_wall and self.get_node(node.x, node.y + dy).is_wall:
+                        # _X_
+                        # X X
+                        # _X_
+                        continue
+                    neighbors.append(neighbor)
         return neighbors
 
     # Converts a world-space or tile coordinate to where it is on the screen.
