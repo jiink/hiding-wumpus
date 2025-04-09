@@ -179,7 +179,7 @@ class HiderB(Npc):
             "size of blind spot": 1
         }
 
-        possibilities: dict[GridNode, float] = {k:0 for k,v in self.possible_locations.items() if v != -inf}
+        possibilities: dict[GridNode, float] = {k:0 for k,v in self.shadow_distances.items() if v != -inf}
 
         if not possibilities.keys(): return None
 
