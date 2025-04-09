@@ -34,7 +34,7 @@ class App:
         self.running = True
         self.ui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
         # Initialize our non-pygame stuff
-        self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
+        self.grid: Grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         # TODO: some way to change the hider algorithms during runtime
@@ -120,6 +120,12 @@ class App:
             manager=self.ui_manager
         )
 
+        # Clear the grid button
+        self.clear_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(right_x - btn_w * 0.5 - btn_mn, btn_mn, btn_w * 0.5, btn_h),
+            text="Clear",
+            manager=self.ui_manager
+        )
         # Save button
         self.save_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(right_x, btn_mn, btn_w, btn_h),
@@ -177,6 +183,8 @@ class App:
                         self.seeker_manual_mode = not self.seeker_manual_mode
                         self.seeker_npc.auto_move = not self.seeker_manual_mode
                         self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
+                    elif event.ui_element == self.clear_button:
+                        self.grid.clear()
                     elif event.ui_element == self.save_button:
                         level_name = self.level_name_input.get_text()
                         if level_name:

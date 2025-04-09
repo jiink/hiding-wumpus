@@ -102,6 +102,12 @@ class Grid:
         screen_x = grid_x * self.tile_size
         screen_y = grid_y * self.tile_size + UI_HEIGHT
         return (screen_x, screen_y)
+    
+    # set all nodes to non-walls
+    def clear(self):
+        for row in self.nodes:
+            for node in row:
+                node.is_wall = False
 
     # Converts screen coordinates to a coordinate of a tile on the grid.
     # Good for finding out where you clicked or something.
