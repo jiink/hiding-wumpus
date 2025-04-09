@@ -7,7 +7,7 @@ import random
 
 # This NPC lives on a grid and pursues the target via its pathfinder.
 class Npc:
-    THINK_INTERVAL = 1.0 # This npc will think every X seconds
+    THINK_INTERVAL = 0.5 # This npc will think every X seconds
     THOUGHT_DURATION = 0.5 # how long does thought-text appear for? (in sec)
 
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
