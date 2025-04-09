@@ -175,7 +175,7 @@ class HiderB(Npc):
         weights = {
             "distance to walls": 3,
             "distance to shadows": 2,
-            "distance to hider": 4,
+            "distance to hider": 5,
             "size of blind spot": 1
         }
 
@@ -240,11 +240,10 @@ class HiderB(Npc):
         location = self.grid.get_node(*self.position.to_grid_pos())
         
         # Only stop if we are not seen by the seeker and we got where we think is best
-        if not location.seen_by_seeker and location == self.best_location:
+        if not location.seen_by_seeker and (self.best_location and location == self.best_location):
             self.emit_thought("I'm safe")
-            return
-
-        self.emit_thought("uh oh")
+        else:
+            self.emit_thought("uh oh")
 
         # Consider if the seeker can see the hiding spot
         self.create_possible_locations() # normal grid iter
