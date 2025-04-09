@@ -39,6 +39,7 @@ class App:
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         # TODO: some way to change the hider algorithms during runtime
         self.hider_npc = HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+        self.seeker_npc.set_hider(self.hider_npc)
         self.click_mode = ClickMode.TILE
         self.debug_mode = True
         self.seeker_manual_mode = False # False = AI controlled, True = keyboard controlled

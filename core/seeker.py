@@ -10,15 +10,34 @@ class Seeker(Npc):
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
+        self.hider_ref = None
         
+    def set_hider(self, hider):
+        self.hider_ref = hider
+
     def think(self):
         self.emit_thought("thinking...")
-        # Random spot selection with a retry limit to avoid infinite loops
-        while True:
-            x = random.randint(0, self.grid.size - 1)
-            y = random.randint(0, self.grid.size - 1)
-            if self.set_target(x, y):
-                break
+
+        #Check if hider hasn't been set yet
+        if not self.hider_ref:
+            self.emit_thought("No hider to track.")
+            return
+        
+        hider_pos = self.hider_ref.position.to_grid_pos()
+        seeker_pos = self.position.to_grid_pos()
+
+        if not self.grid.is_wall_between(seeker_pos, hider_pos):
+            self.emit_thought(f"Hider seen at {hider_pos}!")
+            self.set_target(*hider_pos)
+
+        else:
+            # Random spot selection with a retry limit to avoid infinite loops
+            self.emit_thought("thinking...")
+            while True:
+                x = random.randint(0, self.grid.size - 1)
+                y = random.randint(0, self.grid.size - 1)
+                if self.set_target(x, y):
+                    break
 
     def update(self, dt: float):
         if self.auto_move:
