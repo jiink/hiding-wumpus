@@ -119,6 +119,21 @@ class Grid:
         grid_y = max(0, min(grid_y, self.size - 1))
         return (grid_x, grid_y)
     
+    # Sets stench to true in the given radius, false otherwise
+    def stink_it(self, x, y, radius) -> None:
+        for row in self.nodes:
+            for node in row:
+                node.stench = False
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                nx, ny = x + dx, y + dy
+                if self.is_valid_position(nx, ny):
+                    distance = abs(dx) + abs(dy)
+                    if distance <= radius:
+                        node = self.get_node(nx, ny)
+                        if node:
+                            node.stench = True
+
     @staticmethod
     def add_colors(color1: Tuple[int, int, int], color2: Tuple[int, int, int]) -> Tuple[int, int, int]:
         return tuple(min(c1 + c2, 255) for c1, c2 in zip(color1, color2))

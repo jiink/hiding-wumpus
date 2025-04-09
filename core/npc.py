@@ -72,13 +72,13 @@ class Npc:
     # `dt` means delta time, the amount of time passed since the last
     # frame. This is for framerate-independent motion.
     def update(self, dt: float):
-        if self.can_think:
-            # "Think" periodically
-            self.think_timer += dt
-            if self.think_timer >= self.THINK_INTERVAL:
+        # "Think" periodically
+        self.think_timer += dt
+        if self.think_timer >= self.THINK_INTERVAL:
+            self.think_timer = 0.0
+            if self.can_think:
                 self.think()
-                self.think_timer = 0.0
-
+            
         # Update thought timer
         if self.thought_text:
             self.thought_timer += dt

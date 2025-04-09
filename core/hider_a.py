@@ -189,11 +189,9 @@ class HiderA(Npc):
                 distance_score = self.walking_distance(node)
                 if distance_score is None:
                     distance_score = 10
-                # TODO: stench score
-                
-                # TODO: right now it does nothing if it's caught in a bad spot and there aren't any good candidates. in this case, let it flee.
+                stench_score = 1 if node.stench else 0
                 # todo: feel free to multiply each term by something to balance things out
-                self.candidates[node] = shadow_depth_score + wall_dist_score + distance_score * 0.05
+                self.candidates[node] = shadow_depth_score + wall_dist_score + distance_score * 0.05 + stench_score
 
         # want to pick the candidate with the lowest score. If it doesn't
         # work, pick the next best, and so on.
