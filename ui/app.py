@@ -38,8 +38,6 @@ class App:
         self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
-        # TODO: some way to change the hider algorithms during runtime
-        # self.hider_npc = HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
         self.hider_npcs = [
             {
                 "name": "Hider A",
