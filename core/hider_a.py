@@ -15,9 +15,16 @@ class HiderA(Npc):
         self.auto_move = True
         # this is an instance variable so we can see it 
         # drawn to the screen in think_draw()
-        self.candidates: dict[GridNode, float] = {} # index by node to get score
-        self.shadow_depths: dict[GridNode, float] = {} # index by node to get depth (distance from seen)
-        self.wall_distances: dict[GridNode, float] = {} # index by node to get distance
+        # index by node to get score
+        self.candidates: dict[GridNode, float] = {} 
+        # index by node to get depth (distance from seen)
+        self.shadow_depths: dict[GridNode, float] = {} 
+        # index by node to get distance
+        self.wall_distances: dict[GridNode, float] = {} 
+        # index by node to get walking distance from self (the hider) to it.
+        # this considers that an empty space on the other side of a wall is
+        # not 2 spaces away, but much further walking distance.
+        self.walking_distances: dict[GridNode, float] = {} 
     
     # Finds the distances between every shadowed node and the nearest node seen
     # by the seeker and stores it in self.shadow_depths
@@ -87,15 +94,55 @@ class HiderA(Npc):
                         self.wall_distances[n] = dist
                         que.put(n)
 
+    # Flood fill distance from self to node.
+    # Access results in walking_distance()
+    def calculate_walking_distances(self) -> None:
+        # Hey this is a flood fill; the kind that uses a queue,
+        # which makes it a BFS. See the "Moving the recursion into a data structure"
+        # section of https://en.wikipedia.org/wiki/Flood_fill
+        que = queue.Queue()
+        all_nodes = self.grid.all_nodes()
+        self.walking_distances: dict[GridNode, float] = {}
+        max_depth = 10 # so it's not laggy on big maps.
+        dist = 1 # walking distance is node depth
+        que.put(self.grid.get_node(*self.position.to_grid_pos()))
+        que.put(None) # Marker so we know when we hit the next depth.
+        visited = set()  # Track visited nodes to prevent revisiting
+        while not que.empty() and dist < max_depth:
+            node: GridNode = que.get()
+            if node is None:
+                dist += 1
+                if not que.empty():
+                    que.put(None)
+            elif not node.is_wall and node not in visited:
+                self.walking_distances[node] = dist
+                visited.add(node)  # Mark the node as visited
+                for n in self.grid.get_neighbors(node, False):
+                    if n not in visited:
+                        que.put(n)
+        # if the search depth limit was reached, set the rest of
+        # the nodes to the highest walking distance (which is max_depth)
+        if dist == max_depth:
+            for n in all_nodes:
+                if n not in self.walking_distances:
+                    self.walking_distances[n] = max_depth
+        
     # Returns the distance from the given node to the nearest node seen by the 
     # seeker.
-    def distance_from_seen(self, node: GridNode) -> int:
-        return self.shadow_depths[node]
+    # Must run calculate_shadow_depths() first.
+    def distance_from_seen(self, node: GridNode) -> float:
+        return self.shadow_depths.get(node, 0)
     
     # Returns the distance from the given node to the nearest wall.
-    def distance_from_wall(self, node: GridNode) -> int:
-        return self.wall_distances[node]
+    # Must run calculate_wall_distances() first.
+    def distance_from_wall(self, node: GridNode) -> float:
+        return self.wall_distances.get(node, 10)
     
+    # Returns the walking distance from self to the given node.
+    # Must run calculate_wall_distances() first.
+    def walking_distance(self, node: GridNode) -> float:
+        return self.walking_distances.get(node, 10)
+
     # return the maximum value from self.shadow_depths (that isn't inf)
     def get_max_shadow_depth(self) -> int:
         max_depth = 0
@@ -115,6 +162,7 @@ class HiderA(Npc):
             self.emit_thought("Gotta run!")
         self.calculate_shadow_depths() # Need to do this before calling distance_from_seen() later
         self.calculate_wall_distances() # Need to do this before calling distance_from_wall() later
+        self.calculate_walking_distances()
         max_shdw_dpth = self.get_max_shadow_depth()
         # associate scores with nodes
         self.candidates.clear()
@@ -138,12 +186,14 @@ class HiderA(Npc):
                     shadow_depth_score = 0
                 # only care about hugging walls if it's in the shadow
                 wall_dist_score = 1 if node.seen_by_seeker else self.distance_from_wall(node) * 0.1 
-                distance_score = self.position.distance_to(node.get_position()) / self.grid.size
+                distance_score = self.walking_distance(node)
+                if distance_score is None:
+                    distance_score = 10
                 # TODO: stench score
                 
                 # TODO: right now it does nothing if it's caught in a bad spot and there aren't any good candidates. in this case, let it flee.
                 # todo: feel free to multiply each term by something to balance things out
-                self.candidates[node] = shadow_depth_score + distance_score + + wall_dist_score
+                self.candidates[node] = shadow_depth_score + wall_dist_score + distance_score * 0.05
 
         # want to pick the candidate with the lowest score. If it doesn't
         # work, pick the next best, and so on.
