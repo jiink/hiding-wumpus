@@ -196,7 +196,6 @@ class HiderB(Npc):
                 closest_dist,
                 furthest_dist
             ) * weights["distance to walls"] * 10
-            print(possibilities[node])
         # Distance to shadows calculation
         furthest_dist = max(self.shadow_distances.values() or [0])
         closest_dist = 0
@@ -259,6 +258,10 @@ class HiderB(Npc):
         self.create_blind_spot_shadow_size() # bfs all hiding spot groups
 
         self.best_location = self.determine_best_location()
+        if self.best_location not in self.shadow_distances:
+            self.emit_thought("I can't go anywhere :(")
+            self.set_target(*self.position.to_grid_pos())
+            return
         if self.best_location is None:
             self.emit_thought("I can't go anywhere :(")
             return
