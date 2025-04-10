@@ -175,7 +175,7 @@ class HiderB(Npc):
         weights = {
             "distance to walls": 3,
             "distance to shadows": 2,
-            "distance to hider": 5,
+            "distance to hider": 1,
             "size of blind spot": 1
         }
 
