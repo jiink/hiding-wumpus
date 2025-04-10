@@ -6,6 +6,7 @@ import pygame_gui
 from pygame_gui.elements import UIButton, UITextEntryLine, UIDropDownMenu
 from constants import *
 from core.hider_a import HiderA
+from core.hider_b import HiderB
 from core.pathfinder import Pathfinder
 from core.npc import Npc
 from core.seeker import Seeker
@@ -37,15 +38,27 @@ class App:
         self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
-        # TODO: some way to change the hider algorithms during runtime
-        self.hider_npc = HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+        self.hider_npcs = [
+            {
+                "name": "Hider A",
+                "instance": HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+            },
+            {
+                "name": "Hider B",
+                "instance": HiderB(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+            }
+        ]
+        self.hider_index = 0
         self.click_mode = ClickMode.TILE
+        self.hider_npc = self.hider_npcs[self.hider_index]["instance"]
         self.debug_mode = True
         self.seeker_manual_mode = False # False = AI controlled, True = keyboard controlled
         self.mouse_down = False
         self.last_toggle_pos = None
         self.create_ui()
         
+    def next_hider(self):
+        self.hider_index = (self.hider_index + 1) % len(self.hider_npcs)
     
     # This defines all the buttons that show up and what they do.
     # See the `handle_events` function to find where an action is taken
@@ -93,10 +106,16 @@ class App:
 
         # Toggle seeker mode (manual or AI)
         self.seeker_manual_mode_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(btn_mn * 4 + btn_w * 3, btn_mn, btn_w, btn_h),
+            relative_rect=pygame.Rect(btn_mn * 4 + btn_w * 3, btn_mn * 4, btn_w, btn_h),
             text="Seeker: CPU",
         )
 
+        # Scroll through hider AI agents
+        self.hider_ai_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(btn_mn * 4 + btn_w * 3, btn_mn, btn_w * 1.5, btn_h),
+            text=f"Hider AI: {self.hider_npcs[self.hider_index]['name']}",
+            manager=self.ui_manager
+        )
 
         right_x = WINDOW_WIDTH - 270  # Align to right edge
         # Text input for level name
@@ -165,31 +184,34 @@ class App:
             # and we can take an action here.
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    # There's probably a better way to do this too.
-                    if event.ui_element == self.tile_button:
-                        self.click_mode = ClickMode.TILE
-                    elif event.ui_element == self.target_button:
-                        self.click_mode = ClickMode.TARGET
-                    elif event.ui_element == self.debug_button:
-                        self.debug_mode = not self.debug_mode
-                        self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
-                    elif event.ui_element == self.seeker_manual_mode_button:
-                        self.seeker_manual_mode = not self.seeker_manual_mode
-                        self.seeker_npc.auto_move = not self.seeker_manual_mode
-                        self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
-                    elif event.ui_element == self.save_button:
-                        level_name = self.level_name_input.get_text()
-                        if level_name:
-                            LevelManager.save_level(self.grid, self.seeker_npc, Vector2, level_name)
-                            self.refresh_dropdown(select_level=level_name)
-                            self.level_name_input.set_text(level_name)
-                    elif event.ui_element == self.load_button:
-                        selected_level = self.level_dropdown.selected_option
-                        if isinstance(selected_level, tuple):  # Handle tuple case
-                            selected_level = selected_level[0]
-                        if selected_level != "No levels":
-                            LevelManager.load_level(self.grid, self.seeker_npc, Vector2, selected_level)
-
+                    match event.ui_element:
+                        case self.tile_button:
+                            self.click_mode = ClickMode.TILE
+                        case self.target_button:
+                            self.click_mode = ClickMode.TARGET
+                        case self.debug_button:
+                            self.debug_mode = not self.debug_mode
+                            self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
+                        case self.hider_ai_button:
+                            self.next_hider()
+                            self.hider_npc = self.hider_npcs[self.hider_index]["instance"]
+                            self.hider_ai_button.set_text(f"Hider AI: {self.hider_npcs[self.hider_index]['name']}")
+                        case self.seeker_manual_mode_button:
+                            self.seeker_manual_mode = not self.seeker_manual_mode
+                            self.seeker_npc.auto_move = not self.seeker_manual_mode
+                            self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
+                        case self.save_button:
+                            level_name = self.level_name_input.get_text()
+                            if level_name:
+                                LevelManager.save_level(self.grid, self.seeker_npc, Vector2, level_name)
+                                self.refresh_dropdown(select_level=level_name)
+                                self.level_name_input.set_text(level_name)
+                        case self.load_button:
+                            selected_level = self.level_dropdown.selected_option
+                            if isinstance(selected_level, tuple):
+                                selected_level = selected_level[0]
+                            if selected_level != "No levels":
+                                LevelManager.load_level(self.grid, self.seeker_npc, Vector2, selected_level)
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
