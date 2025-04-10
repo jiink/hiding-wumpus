@@ -42,7 +42,9 @@ class Pathfinder:
         goal_node = self.grid.get_node(*goal)
         if not start_node or not goal_node:
             return []
-        if start_node.is_wall or goal_node.is_wall:
+        # We're not checking if it starts in a wall since I want an NPC to get
+        # out of a wall if it's in one, but never enter a wall on purpose.
+        if goal_node.is_wall: 
             return []
         start_node.g_score = 0 # the cost to get here is 0 'cause we start here.
         start_node.h_score = self.heuristic(start_node, goal_node)

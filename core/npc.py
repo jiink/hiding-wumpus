@@ -7,7 +7,7 @@ import random
 
 # This NPC lives on a grid and pursues the target via its pathfinder.
 class Npc:
-    THINK_INTERVAL = 1.0 # This npc will think every X seconds
+    THINK_INTERVAL = 0.5 # This npc will think every X seconds
     THOUGHT_DURATION = 0.5 # how long does thought-text appear for? (in sec)
 
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
@@ -38,8 +38,7 @@ class Npc:
         node = self.grid.get_node(x, y)
         if node and not node.is_wall:
             self.target = Vector2(x, y)
-            self.update_path()
-            return True
+            return self.update_path()
         else:
             return False
 
@@ -73,13 +72,13 @@ class Npc:
     # `dt` means delta time, the amount of time passed since the last
     # frame. This is for framerate-independent motion.
     def update(self, dt: float):
-        if self.can_think:
-            # "Think" periodically
-            self.think_timer += dt
-            if self.think_timer >= self.THINK_INTERVAL:
+        # "Think" periodically
+        self.think_timer += dt
+        if self.think_timer >= self.THINK_INTERVAL:
+            self.think_timer = 0.0
+            if self.can_think:
                 self.think()
-                self.think_timer = 0.0
-
+            
         # Update thought timer
         if self.thought_text:
             self.thought_timer += dt

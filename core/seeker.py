@@ -7,12 +7,16 @@ from models.grid import Grid
 from models.vector import Vector2  
 
 class Seeker(Npc):
+    STINK_INTERVAL = 0.5 # every X seconds
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
+        self.stink_timer = 0
         
     def think(self):
         self.emit_thought("thinking...")
+        # rule: seeker has to stink it up to give the hider a hint
+        self.grid.stink_it(*self.position.to_grid_pos(), radius=5)
         # Random spot selection with a retry limit to avoid infinite loops
         while True:
             x = random.randint(0, self.grid.size - 1)
@@ -21,6 +25,10 @@ class Seeker(Npc):
                 break
 
     def update(self, dt: float):
+        self.stink_timer += dt
+        if self.stink_timer >= self.STINK_INTERVAL:
+            self.stink_timer = 0.0
+            self.grid.stink_it(*self.position.to_grid_pos(), radius=8)
         if self.auto_move:
             super().update(dt) 
         else:

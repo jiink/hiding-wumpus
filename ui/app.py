@@ -35,7 +35,7 @@ class App:
         self.running = True
         self.ui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
         # Initialize our non-pygame stuff
-        self.grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
+        self.grid: Grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         self.hider_npcs = [
@@ -139,6 +139,12 @@ class App:
             manager=self.ui_manager
         )
 
+        # Clear the grid button
+        self.clear_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(right_x - btn_w * 0.5 - btn_mn, btn_mn + btn_h, btn_w * 0.5, btn_h),
+            text="Clear",
+            manager=self.ui_manager
+        )
         # Save button
         self.save_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(right_x, btn_mn, btn_w, btn_h),
@@ -179,7 +185,7 @@ class App:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False # to exit the game loop in the run() func
+                self.running = False  # to exit the game loop in the run() func
             # When the user uses a pygame_gui button, it makes a pygame event
             # and we can take an action here.
             if event.type == pygame.USEREVENT:
@@ -200,6 +206,8 @@ class App:
                             self.seeker_manual_mode = not self.seeker_manual_mode
                             self.seeker_npc.auto_move = not self.seeker_manual_mode
                             self.seeker_manual_mode_button.set_text(f"Seeker: {'Human' if self.seeker_manual_mode else 'CPU'}")
+                        case self.clear_button:
+                            self.grid.clear()
                         case self.save_button:
                             level_name = self.level_name_input.get_text()
                             if level_name:
@@ -208,14 +216,14 @@ class App:
                                 self.level_name_input.set_text(level_name)
                         case self.load_button:
                             selected_level = self.level_dropdown.selected_option
-                            if isinstance(selected_level, tuple):
+                            if isinstance(selected_level, tuple):  # Handle tuple case
                                 selected_level = selected_level[0]
                             if selected_level != "No levels":
                                 LevelManager.load_level(self.grid, self.seeker_npc, Vector2, selected_level)
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
-            
+
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.mouse_down = True
                 self.last_toggle_pos = None
@@ -225,9 +233,9 @@ class App:
                 self.mouse_down = False
             # Handle mouse motion while button is held down
             if event.type == pygame.MOUSEMOTION and self.mouse_down:
-                self.handle_tile_click()            
+                self.handle_tile_click()
 
-            self.ui_manager.process_events(event) # pygame_gui requires this
+            self.ui_manager.process_events(event)  # pygame_gui requires this
 
     def update_visibility(self):
         # A gridnode is marked not visible if there is a wall tile between its
