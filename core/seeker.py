@@ -11,33 +11,67 @@ class Seeker(Npc):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
         self.hider_ref = None
-        
+        self.last_seen_pos = None  
+        # self.search_zones = self.create_search_zones()  
+    
     def set_hider(self, hider):
         self.hider_ref = hider
 
+    #def create_search_zones(self):
+        # Create a grid of search zones with higher probability near the last known position of the Hider
+
     def think(self):
-        self.emit_thought("thinking...")
+        hider_pos = self.hider_ref.position.to_grid_pos()
+        seeker_pos = self.position.to_grid_pos()
 
         #Check if hider hasn't been set yet
         if not self.hider_ref:
             self.emit_thought("No hider to track.")
             return
         
-        hider_pos = self.hider_ref.position.to_grid_pos()
-        seeker_pos = self.position.to_grid_pos()
+        # End game if seeker reaches hider
+        if self.position.to_grid_pos() == hider_pos:
+            self.emit_thought("Seeker has caught the Hider! Game Over.")
+            # end game
 
         if not self.grid.is_wall_between(seeker_pos, hider_pos):
+        # if the Hider is in sight follow it 
             self.emit_thought(f"Hider seen at {hider_pos}!")
+            self.last_seen_pos = hider_pos
             self.set_target(*hider_pos)
 
         else:
-            # Random spot selection with a retry limit to avoid infinite loops
-            self.emit_thought("thinking...")
+        # if there is no last seen position, wander randomly
+            self.emit_thought("...")    
             while True:
                 x = random.randint(0, self.grid.size - 1)
                 y = random.randint(0, self.grid.size - 1)
                 if self.set_target(x, y):
                     break
+
+        # else:
+        # # If the Hider is out of sight, but there is a last seen location
+        #     self.emit_thought(f"Hider last seen at {self.last_seen_pos}!")
+        #     self.search_nearby(self.last_seen_pos)
+
+    # def search_nearby(self, last_seen_pos):
+    #     best_prob = -1 
+    #     best_pos = None
+        
+    #     # Search within a radius of 1 to 2 cells around the last known position
+    #     for dx in [-1, 0, 1]:
+    #         for dy in [-1, 0, 1]:
+    #             x, y = last_seen_pos[0] + dx, last_seen_pos[1] + dy
+    #             if 0 <= x < self.grid.size and 0 <= y < self.grid.size:
+    #                 # Check if this position has the highest probability in the search zone grid
+    #                 prob = self.search_zones[x][y]
+    #                 if prob > best_prob:
+    #                     best_prob = prob
+    #                     best_pos = (x, y)
+
+    #     if best_pos:
+    #         self.emit_thought(f"Searching at {best_pos} with best probability!")
+    #         self.set_target(*best_pos)
 
     def update(self, dt: float):
         if self.auto_move:
