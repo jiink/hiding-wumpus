@@ -176,7 +176,8 @@ class HiderB(Npc):
             "distance to walls": 3,
             "distance to shadows": 2,
             "distance to hider": 1,
-            "size of blind spot": 1
+            "size of blind spot": 1,
+            "stench": 1
         }
 
         possibilities: dict[GridNode, float] = {k:0 for k,v in self.shadow_distances.items() if v != -inf}
@@ -227,6 +228,8 @@ class HiderB(Npc):
                 closest_dist,
                 furthest_dist
             ) * weights["size of blind spot"] * 10
+        for node in possibilities.keys():
+            possibilities[node] += (weights["stench"] * 10) if node.stench else 0
         return max(possibilities, key=possibilities.get)
         # Debug purposes (comment or remove the return to see the final scoring)
         for node, dist in possibilities.items():
