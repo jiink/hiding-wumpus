@@ -1,3 +1,4 @@
+from typing import Dict
 import pygame
 
 import heapq as hq
@@ -7,10 +8,19 @@ from core.npc import Npc
 from models.grid_node import GridNode
 from collections import deque
 
-class HiderB(Npc):
+class Hider(Npc):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, characteristics=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.characteristics = characteristics or { # default just in case
+            "distance to walls": 3,
+            "distance to shadows": 2,
+            "distance to hider": 1,
+            "size of blind spot": 1,
+            "stench": 1,
+
+            "stench_cost": 10
+        }
         self.auto_move = True
         # this is an instance variable so we can see it 
         # drawn to the screen in think_draw()
@@ -51,19 +61,19 @@ class HiderB(Npc):
         for node, v in self.possible_locations.items():
             self.wall_distances[node] = inf if v == 0 else -inf
         # BFS out from all the points, keeping track of the min dist to a wall, to store which nodes are closest to walls
+        q = deque()
+        seen = set()
         for node in starting_points:
-            q = deque()
-            seen = set()
             q.append((node, 0))
-            while q:
-                node, dist = q.popleft()
-                if node in seen:
-                    continue
-                seen.add(node)
-                self.wall_distances[node] = min(self.wall_distances[node], dist)
-                for n in self.grid.get_neighbors(node, wall_ok=False):
-                    if self.possible_locations[n] == 0 and n not in seen:
-                        q.append((n, dist + 1))
+        while q:
+            node, dist = q.popleft()
+            if node in seen:
+                continue
+            seen.add(node)
+            self.wall_distances[node] = min(self.wall_distances[node], dist)
+            for n in self.grid.get_neighbors(node, wall_ok=False):
+                if self.possible_locations[n] == 0 and n not in seen:
+                    q.append((n, dist + 1))
         # Debug purposes (comment or remove the return to see the wall scoring)
         return
         for node, dist in self.wall_distances.items():
@@ -83,20 +93,20 @@ class HiderB(Npc):
         # Default values
         for node, v in self.possible_locations.items():
             self.shadow_distances[node] = inf if v == 0 else -inf
-        # BFS out from all the points, keeping track of the min dist to a wall, to store which nodes are closest to walls
+        # BFS out from all the points, keeping track of the minimum distance to the starting points (shadow edges)
+        q = deque()
+        seen = set()
         for node in starting_points:
-            q = deque()
-            seen = set()
             q.append((node, 0))
-            while q:
-                node, dist = q.popleft()
-                if node in seen:
-                    continue
-                seen.add(node)
-                self.shadow_distances[node] = min(self.shadow_distances[node], dist)
-                for n in self.grid.get_neighbors(node, wall_ok=False):
-                    if self.possible_locations[n] == 0 and n not in seen:
-                        q.append((n, dist + 1))
+        while q:
+            node, dist = q.popleft()
+            if node in seen:
+                continue
+            seen.add(node)
+            self.shadow_distances[node] = min(self.shadow_distances[node], dist)
+            for n in self.grid.get_neighbors(node, wall_ok=False):
+                if self.possible_locations[n] == 0 and n not in seen:
+                    q.append((n, dist + 1))
         for node, dist in self.shadow_distances.items():
             # Dist == inf means that the node is not reachable, so make it -inf
             # to indicate that it is not a possible location
@@ -172,12 +182,7 @@ class HiderB(Npc):
 
     def determine_best_location(self) -> GridNode:
         # Multiplier applied to each category for scoring
-        weights = {
-            "distance to walls": 3,
-            "distance to shadows": 2,
-            "distance to hider": 1,
-            "size of blind spot": 1
-        }
+        weights = self.characteristics
 
         possibilities: dict[GridNode, float] = {k:0 for k,v in self.shadow_distances.items() if v != -inf}
 
@@ -227,6 +232,8 @@ class HiderB(Npc):
                 closest_dist,
                 furthest_dist
             ) * weights["size of blind spot"] * 10
+        for node in possibilities.keys():
+            possibilities[node] += (-weights["stench"] * 10) if node.stench else 0
         return max(possibilities, key=possibilities.get)
         # Debug purposes (comment or remove the return to see the final scoring)
         for node, dist in possibilities.items():
@@ -236,6 +243,7 @@ class HiderB(Npc):
 
     def think(self):
         self.reset_mind()
+        self.extra_costs = self.make_extra_costs()
 
         location = self.grid.get_node(*self.position.to_grid_pos())
         
@@ -287,3 +295,13 @@ class HiderB(Npc):
                 text_rect = text_surface.get_rect(center=rect.center)
                 surface.blit(text_surface, text_rect)
         super().draw(surface, debug)
+    
+    # For additional weights for the A* pathfinding.
+    def make_extra_costs(self) -> Dict[GridNode, float]:
+        extra_costs: Dict[GridNode, float] = {}
+        all = self.grid.all_nodes()
+        stench_cost = self.characteristics["stench_cost"]
+        for n in all:
+            if n.stench:
+                extra_costs[n] = stench_cost
+        return extra_costs
