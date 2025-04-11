@@ -92,10 +92,10 @@ class Pathfinder:
     def draw_debug(self, surface: pygame.Surface):
         for node in self.visited_nodes:
             x, y = self.grid.grid_to_screen(node.x + 0.5, node.y + 0.5)
-            pygame.draw.circle(surface, VISITED_NODE_COLOR, (x, y), self.grid.tile_size * 0.4)
+            pygame.draw.circle(surface, VISITED_NODE_COLOR, (x, y), self.grid.tile_size * 0.1)
         for node in self.frontier_nodes:
             x, y = self.grid.grid_to_screen(node.x + 0.5, node.y + 0.5)
-            pygame.draw.circle(surface, FRONTIER_NODE_COLOR, (x, y), self.grid.tile_size * 0.4)
+            pygame.draw.circle(surface, FRONTIER_NODE_COLOR, (x, y), self.grid.tile_size * 0.1)
         # the path
         if len(self.path) > 1:
             points = [
