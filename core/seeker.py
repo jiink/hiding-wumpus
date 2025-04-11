@@ -15,8 +15,6 @@ class Seeker(Npc):
         
     def think(self):
         self.emit_thought("thinking...")
-        # rule: seeker has to stink it up to give the hider a hint
-        self.grid.stink_it(*self.position.to_grid_pos(), radius=5)
         # Random spot selection with a retry limit to avoid infinite loops
         while True:
             x = random.randint(0, self.grid.size - 1)
