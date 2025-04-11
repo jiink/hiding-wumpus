@@ -13,7 +13,6 @@ class Hider(Npc):
     def __init__(self, *args, characteristics=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.characteristics = characteristics or { # default just in case
-            "color": (255, 0, 0),
             "distance to walls": 3,
             "distance to shadows": 2,
             "distance to hider": 1,
