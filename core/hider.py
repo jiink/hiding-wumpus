@@ -10,8 +10,18 @@ from collections import deque
 
 class Hider(Npc):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, characteristics=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.characteristics = characteristics or { # default just in case
+            "color": (255, 0, 0),
+            "distance to walls": 3,
+            "distance to shadows": 2,
+            "distance to hider": 1,
+            "size of blind spot": 1,
+            "stench": 1,
+
+            "stench_cost": 10
+        }
         self.auto_move = True
         # this is an instance variable so we can see it 
         # drawn to the screen in think_draw()
@@ -173,13 +183,7 @@ class Hider(Npc):
 
     def determine_best_location(self) -> GridNode:
         # Multiplier applied to each category for scoring
-        weights = {
-            "distance to walls": 3,
-            "distance to shadows": 2,
-            "distance to hider": 1,
-            "size of blind spot": 1,
-            "stench": 1
-        }
+        weights = self.characteristics
 
         possibilities: dict[GridNode, float] = {k:0 for k,v in self.shadow_distances.items() if v != -inf}
 
@@ -297,9 +301,8 @@ class Hider(Npc):
     def make_extra_costs(self) -> Dict[GridNode, float]:
         extra_costs: Dict[GridNode, float] = {}
         all = self.grid.all_nodes()
+        stench_cost = self.characteristics["stench_cost"]
         for n in all:
             if n.stench:
-                stench_penalty = 10
-                extra_costs[n] = stench_penalty
+                extra_costs[n] = stench_cost
         return extra_costs
-    

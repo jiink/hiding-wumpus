@@ -38,6 +38,18 @@ class App:
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         self.hider_npcs = [
+            {
+                "characteristics": {
+                    # Preferences for where to hide
+                    "distance to walls": 3,
+                    "distance to shadows": 2,
+                    "distance to hider": 1,
+                    "size of blind spot": 1,
+                    "stench": 1,
+                    # Preferences for what path to take. Relative
+                    # to the cost of moving 1 tile, which is 1.
+                    "stench_cost": 10
+                }
             },
             {
                 "name": "Hider B",
