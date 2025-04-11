@@ -51,19 +51,19 @@ class HiderB(Npc):
         for node, v in self.possible_locations.items():
             self.wall_distances[node] = inf if v == 0 else -inf
         # BFS out from all the points, keeping track of the min dist to a wall, to store which nodes are closest to walls
+        q = deque()
+        seen = set()
         for node in starting_points:
-            q = deque()
-            seen = set()
             q.append((node, 0))
-            while q:
-                node, dist = q.popleft()
-                if node in seen:
-                    continue
-                seen.add(node)
-                self.wall_distances[node] = min(self.wall_distances[node], dist)
-                for n in self.grid.get_neighbors(node, wall_ok=False):
-                    if self.possible_locations[n] == 0 and n not in seen:
-                        q.append((n, dist + 1))
+        while q:
+            node, dist = q.popleft()
+            if node in seen:
+                continue
+            seen.add(node)
+            self.wall_distances[node] = min(self.wall_distances[node], dist)
+            for n in self.grid.get_neighbors(node, wall_ok=False):
+                if self.possible_locations[n] == 0 and n not in seen:
+                    q.append((n, dist + 1))
         # Debug purposes (comment or remove the return to see the wall scoring)
         return
         for node, dist in self.wall_distances.items():
@@ -83,20 +83,20 @@ class HiderB(Npc):
         # Default values
         for node, v in self.possible_locations.items():
             self.shadow_distances[node] = inf if v == 0 else -inf
-        # BFS out from all the points, keeping track of the min dist to a wall, to store which nodes are closest to walls
+        # BFS out from all the points, keeping track of the minimum distance to the starting points (shadow edges)
+        q = deque()
+        seen = set()
         for node in starting_points:
-            q = deque()
-            seen = set()
             q.append((node, 0))
-            while q:
-                node, dist = q.popleft()
-                if node in seen:
-                    continue
-                seen.add(node)
-                self.shadow_distances[node] = min(self.shadow_distances[node], dist)
-                for n in self.grid.get_neighbors(node, wall_ok=False):
-                    if self.possible_locations[n] == 0 and n not in seen:
-                        q.append((n, dist + 1))
+        while q:
+            node, dist = q.popleft()
+            if node in seen:
+                continue
+            seen.add(node)
+            self.shadow_distances[node] = min(self.shadow_distances[node], dist)
+            for n in self.grid.get_neighbors(node, wall_ok=False):
+                if self.possible_locations[n] == 0 and n not in seen:
+                    q.append((n, dist + 1))
         for node, dist in self.shadow_distances.items():
             # Dist == inf means that the node is not reachable, so make it -inf
             # to indicate that it is not a possible location
