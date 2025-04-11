@@ -1,5 +1,5 @@
 import heapq
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import pygame
 from constants import *
@@ -34,7 +34,7 @@ class Pathfinder:
     # This is where the search algorithm happens!
     # Finds a path from the start grid coordinates to the goal grid coordinates.
     # Returns an in-order list of nodes to travel to get to the goal.
-    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[GridNode]:
+    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int], extra_costs: Dict[GridNode, float] = {}) -> List[GridNode]:
         self.reset_path_data() # clean up the frontier, node values, etc.
         # The asterisk syntax here unpacks the single (x, y) coordinate
         # tuple into two arguments.
@@ -74,7 +74,7 @@ class Pathfinder:
                 return self.path # early return!
             for neighbor in self.grid.get_neighbors(current_node):
                 # This is where path costs get added up
-                move_cost = 1
+                move_cost = 1 + extra_costs.get(neighbor, 0)
                 m_g_score = current_node.g_score + move_cost
                 # i ought to better understand what is going on in
                 # this part...

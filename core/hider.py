@@ -1,3 +1,4 @@
+from typing import Dict
 import pygame
 
 import heapq as hq
@@ -239,6 +240,7 @@ class Hider(Npc):
 
     def think(self):
         self.reset_mind()
+        self.extra_costs = self.make_extra_costs()
 
         location = self.grid.get_node(*self.position.to_grid_pos())
         
@@ -290,3 +292,14 @@ class Hider(Npc):
                 text_rect = text_surface.get_rect(center=rect.center)
                 surface.blit(text_surface, text_rect)
         super().draw(surface, debug)
+    
+    # For additional weights for the A* pathfinding.
+    def make_extra_costs(self) -> Dict[GridNode, float]:
+        extra_costs: Dict[GridNode, float] = {}
+        all = self.grid.all_nodes()
+        for n in all:
+            if n.stench:
+                stench_penalty = 10
+                extra_costs[n] = stench_penalty
+        return extra_costs
+    
