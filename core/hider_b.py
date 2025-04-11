@@ -229,7 +229,7 @@ class HiderB(Npc):
                 furthest_dist
             ) * weights["size of blind spot"] * 10
         for node in possibilities.keys():
-            possibilities[node] += (weights["stench"] * 10) if node.stench else 0
+            possibilities[node] += (-weights["stench"] * 10) if node.stench else 0
         return max(possibilities, key=possibilities.get)
         # Debug purposes (comment or remove the return to see the final scoring)
         for node, dist in possibilities.items():
