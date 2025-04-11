@@ -7,7 +7,7 @@ from core.npc import Npc
 from models.grid_node import GridNode
 from collections import deque
 
-class HiderB(Npc):
+class Hider(Npc):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

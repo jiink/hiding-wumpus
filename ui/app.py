@@ -5,8 +5,7 @@ import pygame_gui
 
 from pygame_gui.elements import UIButton, UITextEntryLine, UIDropDownMenu
 from constants import *
-from core.hider_a import HiderA
-from core.hider_b import HiderB
+from core.hider import Hider
 from core.pathfinder import Pathfinder
 from core.npc import Npc
 from core.seeker import Seeker
@@ -39,13 +38,10 @@ class App:
         self.pathfinder = Pathfinder(self.grid)
         self.seeker_npc = Seeker(self.grid, self.pathfinder, SEEKER_COLOR, can_think=True)
         self.hider_npcs = [
-            {
-                "name": "Hider A",
-                "instance": HiderA(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
             },
             {
                 "name": "Hider B",
-                "instance": HiderB(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
+                "instance": Hider(self.grid, self.pathfinder, HIDER_COLOR, can_think=True)
             }
         ]
         self.hider_index = 0
