@@ -4,15 +4,14 @@ from constants import *
 from core.npc import Npc
 from core.pathfinder import Pathfinder
 from models.grid import Grid
-from models.vector import Vector2  
+from models.vector import Vector2
 
 class Seeker(Npc):
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
         self.hider_ref = None
-        self.last_seen_pos = None
-        # dictionary that keeps track of the "memory" of each tile on the grid. 
+        self.last_seen_time = 0  # Last time the Hider was seen
         self.tile_memory = {
             (x, y): 0
             for x in range(self.grid.size)
@@ -46,14 +45,24 @@ class Seeker(Npc):
         # Check if Seeker has caught the Hider
         if seeker_pos == hider_pos:
             self.end_game()  # End the game when the Seeker catches the Hider
-            self.emit_thought("Seeker has caught the Hider!")
             return
 
         if not self.grid.is_wall_between(seeker_pos, hider_pos):
             # If the Hider is in sight, follow it
             self.emit_thought(f"Hider seen at {hider_pos}!")
-            self.last_seen_pos = hider_pos
+            self.last_seen_time = pygame.time.get_ticks() / 1000
             self.set_target(*hider_pos)
+            return
+            
+        current_time = pygame.time.get_ticks() / 1000  # Get current time in seconds
+        time_since_seen = current_time - self.last_seen_time
+
+        if time_since_seen < 3 and self.grid.is_wall_between(seeker_pos, hider_pos):
+            # If the Seeker loses sight, predict the Hider's next position based on direction
+            predicted_pos = self.predict_hider_position(hider_pos)
+            self.emit_thought(f"Hider escaped sight, he might be here!")
+            self.set_target(*predicted_pos)
+            return
 
         else:
             # Update tile memory
@@ -64,22 +73,45 @@ class Seeker(Npc):
                 else:
                     self.tile_memory[pos] += 1
 
-            # Filter reachable tiles
-            reachable = [pos for pos in self.tile_memory if self.set_target(*pos)]
-            
-            if reachable:
-                # Find the tile that has gone unseen for the longest
-                target = max(reachable, key=lambda pos: self.tile_memory[pos])
-                self.emit_thought(f"Wandering to {target}, unseen for {self.tile_memory[target]} frames.")
+            # Check if Seeker can find a target tile (unexplored or unexplored recently)
+            target = self.find_best_target()
+
+            if target:
+                self.emit_thought(f"Exploring unexplored area: {target}")
                 self.set_target(*target)
             else:
-                # Fallback to random wandering
-                self.emit_thought("Fallback: Wandering randomly.")
-                for _ in range(50):  # try up to 50 times to find a walkable random tile
+                # Log the issue if no target was found
+                self.emit_thought("No target found, wandering randomly.")
+                # Fallback to random wandering if no target is found
+                for _ in range(50):  # Try up to 50 times to find a walkable random tile
                     x = random.randint(0, self.grid.size - 1)
                     y = random.randint(0, self.grid.size - 1)
                     if self.set_target(x, y):
                         break
+
+    def find_best_target(self):
+        unexplored_tiles = [(x, y) for (x, y), time in self.tile_memory.items() if time > 5] 
+        if unexplored_tiles:
+            self.emit_thought(f"Unexplored tiles: {unexplored_tiles}")
+            return max(unexplored_tiles, key=lambda pos: self.tile_memory[pos])
+        self.emit_thought("No unexplored tiles found!")
+        return None
+
+
+    def predict_hider_position(self, last_pos):
+        # Search around the last seen position 
+        radius = 5 
+        random.shuffle(DIRECTIONS := [(dx, dy) for dx in range(-radius, radius + 1)
+                                                for dy in range(-radius, radius + 1)
+                                                if (dx != 0 or dy != 0)])
+        for dx, dy in DIRECTIONS:
+            x = last_pos[0] + dx
+            y = last_pos[1] + dy
+            if 0 <= x < self.grid.size and 0 <= y < self.grid.size:
+                node = self.grid.get_node(x, y)
+                if node and not node.is_wall:
+                    return (x, y)
+        return last_pos
 
     def update(self, dt: float):
         if self.auto_move:
@@ -126,10 +158,3 @@ class Seeker(Npc):
                 else:
                     # Otherwise, keep moving
                     self.position = Vector2(new_x, new_y)
-
-
-    def check_game_over(self):
-        # Check if the Seeker has caught the Hider (game over condition)
-        if self.position == self.hider_ref.position:
-            self.end_game()  # End the game when the Seeker catches the Hider
-            self.emit_thought("Seeker has caught the Hider!")
