@@ -19,9 +19,16 @@ class Seeker(Npc):
             for y in range(self.grid.size)
             if not self.grid.get_node(x, y).is_wall
         }
+        self.game_over = False 
+        self.start_position = self.position
+        self.is_game_started = False 
 
     def set_hider(self, hider):
         self.hider_ref = hider
+
+    def end_game(self):
+        self.game_over = True 
+        self.emit_thought("Game Over! Seeker has caught the Hider!")
 
     def think(self):
         if not self.hider_ref:
@@ -31,8 +38,19 @@ class Seeker(Npc):
         hider_pos = self.hider_ref.position.to_grid_pos()
         seeker_pos = self.position.to_grid_pos()
 
+        # Skip the game over check during the first frame
+        if not self.is_game_started:
+            self.is_game_started = True 
+            return
+        
+        # Check if Seeker has caught the Hider
+        if seeker_pos == hider_pos:
+            self.end_game()  # End the game when the Seeker catches the Hider
+            self.emit_thought("Seeker has caught the Hider!")
+            return
+
         if not self.grid.is_wall_between(seeker_pos, hider_pos):
-        # if the Hider is in sight follow it 
+            # If the Hider is in sight, follow it
             self.emit_thought(f"Hider seen at {hider_pos}!")
             self.last_seen_pos = hider_pos
             self.set_target(*hider_pos)
@@ -73,7 +91,6 @@ class Seeker(Npc):
                                         pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]):
                 self.last_key_time = 0.0 
                 self.manual_move(keys, dt)
-                
 
     def manual_move(self, keys, dt):
         # Manual movement using WASD or Arrow keys.
@@ -101,4 +118,18 @@ class Seeker(Npc):
         if 0 <= new_x < self.grid.size and 0 <= new_y < self.grid.size:
             node = self.grid.get_node(int(new_x), int(new_y))
             if node and not node.is_wall:
-                self.position = Vector2(new_x, new_y)
+                # Stop at the Hider's position if Seeker reaches it
+                if (int(new_x), int(new_y)) == self.target:
+                    self.position = Vector2(int(new_x), int(new_y))
+                    self.emit_thought("Reached target!")
+                    self.check_game_over()  # Check if Seeker has caught the Hider
+                else:
+                    # Otherwise, keep moving
+                    self.position = Vector2(new_x, new_y)
+
+
+    def check_game_over(self):
+        # Check if the Seeker has caught the Hider (game over condition)
+        if self.position == self.hider_ref.position:
+            self.end_game()  # End the game when the Seeker catches the Hider
+            self.emit_thought("Seeker has caught the Hider!")

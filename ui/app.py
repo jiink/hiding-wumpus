@@ -236,6 +236,10 @@ class App:
 
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
+         # Check if the game is over
+        if self.seeker_npc.game_over:
+            self.display_game_over_screen()  # Show the game over screen
+            return
         self.ui_manager.update(dt) # pygame_gui requires this
         self.seeker_npc.update(dt)
         self.hider_npc.update(dt)
@@ -267,3 +271,23 @@ class App:
             self.update(dt)
             self.draw()
         pygame.quit()
+
+    # display game over
+    def display_game_over_screen(self):
+        font = pygame.font.SysFont('Arial', 48)
+        text = font.render("Game Over!", True, (255, 0, 0))  
+        text_width = text.get_width()
+        text_height = text.get_height()
+
+        # Calculate the center of the grid 
+        grid_center_x = self.grid.size // 2  
+        grid_center_y = self.grid.size // 2  
+        screen_x, screen_y = self.grid.grid_to_screen(grid_center_x, grid_center_y)
+
+        # Adjust the position so the text is centered at the grid center
+        x = screen_x - text_width // 2  
+        y = screen_y - text_height // 2  
+
+        # Draw the text on the screen at the calculated position
+        self.screen.blit(text, (x, y))
+        pygame.display.flip()
