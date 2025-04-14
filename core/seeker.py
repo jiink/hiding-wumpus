@@ -11,28 +11,25 @@ class Seeker(Npc):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
         self.hider_ref = None
-        self.last_seen_pos = None  
-        # self.search_zones = self.create_search_zones()  
-    
+        self.last_seen_pos = None
+        # dictionary that keeps track of the "memory" of each tile on the grid. 
+        self.tile_memory = {
+            (x, y): 0
+            for x in range(self.grid.size)
+            for y in range(self.grid.size)
+            if not self.grid.get_node(x, y).is_wall
+        }
+
     def set_hider(self, hider):
         self.hider_ref = hider
 
-    #def create_search_zones(self):
-        # Create a grid of search zones with higher probability near the last known position of the Hider
-
     def think(self):
-        hider_pos = self.hider_ref.position.to_grid_pos()
-        seeker_pos = self.position.to_grid_pos()
-
-        #Check if hider hasn't been set yet
         if not self.hider_ref:
             self.emit_thought("No hider to track.")
             return
-        
-        # End game if seeker reaches hider
-        if self.position.to_grid_pos() == hider_pos:
-            self.emit_thought("Seeker has caught the Hider! Game Over.")
-            # end game
+
+        hider_pos = self.hider_ref.position.to_grid_pos()
+        seeker_pos = self.position.to_grid_pos()
 
         if not self.grid.is_wall_between(seeker_pos, hider_pos):
         # if the Hider is in sight follow it 
@@ -41,37 +38,30 @@ class Seeker(Npc):
             self.set_target(*hider_pos)
 
         else:
-        # if there is no last seen position, wander randomly
-            self.emit_thought("...")    
-            while True:
-                x = random.randint(0, self.grid.size - 1)
-                y = random.randint(0, self.grid.size - 1)
-                if self.set_target(x, y):
-                    break
+            # Update tile memory
+            visible_tiles = self.grid.get_visible_tiles(seeker_pos)
+            for pos in self.tile_memory:
+                if pos in visible_tiles:
+                    self.tile_memory[pos] = 0
+                else:
+                    self.tile_memory[pos] += 1
 
-        # else:
-        # # If the Hider is out of sight, but there is a last seen location
-        #     self.emit_thought(f"Hider last seen at {self.last_seen_pos}!")
-        #     self.search_nearby(self.last_seen_pos)
-
-    # def search_nearby(self, last_seen_pos):
-    #     best_prob = -1 
-    #     best_pos = None
-        
-    #     # Search within a radius of 1 to 2 cells around the last known position
-    #     for dx in [-1, 0, 1]:
-    #         for dy in [-1, 0, 1]:
-    #             x, y = last_seen_pos[0] + dx, last_seen_pos[1] + dy
-    #             if 0 <= x < self.grid.size and 0 <= y < self.grid.size:
-    #                 # Check if this position has the highest probability in the search zone grid
-    #                 prob = self.search_zones[x][y]
-    #                 if prob > best_prob:
-    #                     best_prob = prob
-    #                     best_pos = (x, y)
-
-    #     if best_pos:
-    #         self.emit_thought(f"Searching at {best_pos} with best probability!")
-    #         self.set_target(*best_pos)
+            # Filter reachable tiles
+            reachable = [pos for pos in self.tile_memory if self.set_target(*pos)]
+            
+            if reachable:
+                # Find the tile that has gone unseen for the longest
+                target = max(reachable, key=lambda pos: self.tile_memory[pos])
+                self.emit_thought(f"Wandering to {target}, unseen for {self.tile_memory[target]} frames.")
+                self.set_target(*target)
+            else:
+                # Fallback to random wandering
+                self.emit_thought("Fallback: Wandering randomly.")
+                for _ in range(50):  # try up to 50 times to find a walkable random tile
+                    x = random.randint(0, self.grid.size - 1)
+                    y = random.randint(0, self.grid.size - 1)
+                    if self.set_target(x, y):
+                        break
 
     def update(self, dt: float):
         if self.auto_move:

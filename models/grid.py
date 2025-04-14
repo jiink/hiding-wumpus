@@ -152,3 +152,12 @@ class Grid:
                 (pos, UI_HEIGHT),
                 (pos, self.display_size + UI_HEIGHT)
             )
+
+    def get_visible_tiles(self, seeker_pos: tuple[int, int]) -> set[tuple[int, int]]:
+    # simple LOS checker or vision radius
+        visible = set()
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.is_wall_between(seeker_pos, (x, y)):
+                    visible.add((x, y))
+        return visible
