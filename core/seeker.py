@@ -96,7 +96,7 @@ class Seeker(Npc):
             if target:
                 self.emit_thought(f"Exploring unexplored area: {target}")
                 target_node = self.grid.get_node(*target)
-                print(f"Target node at {target} is a wall: {target_node.is_wall}")
+                #print(f"Target node at {target} is a wall: {target_node.is_wall}")
                 self.set_target(*target)
             else:
                 # Log the issue if no target was found
