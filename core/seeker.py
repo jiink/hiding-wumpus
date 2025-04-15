@@ -16,7 +16,7 @@ class Seeker(Npc):
             (x, y): 0
             for x in range(self.grid.size)
             for y in range(self.grid.size)
-            if not self.grid.get_node(x, y).is_wall
+            if not self.grid.get_node(x, y).is_wall # when user draws tiles, tile_memory can end up having wall nodes in it, which is bad. need a tile_memory_refresh function to recalculate this.
         }
         self.game_over = False 
         self.start_position = self.position
@@ -26,13 +26,28 @@ class Seeker(Npc):
         self.hider_ref = hider
 
     def end_game(self):
-        self.game_over = True 
-        self.emit_thought("Game Over! Seeker has caught the Hider!")
+        # self.game_over = True 
+        # self.emit_thought("Game Over! Seeker has caught the Hider!")
+        pass
+
+    def refresh_tile_memory(self):
+        """Refresh the tile memory to exclude wall nodes."""
+        self.tile_memory = {
+            (x, y): 0
+            for x in range(self.grid.size)
+            for y in range(self.grid.size)
+            if not self.grid.get_node(x, y).is_wall
+        }
 
     def think(self):
         if not self.hider_ref:
             self.emit_thought("No hider to track.")
             return
+
+        # Refresh tile memory if tiles have changed
+        if self.grid.tiles_changed:  # Assuming `tiles_changed` is a flag set when tiles are modified
+            self.refresh_tile_memory()
+            self.grid.tiles_changed = False
 
         hider_pos = self.hider_ref.position.to_grid_pos()
         seeker_pos = self.position.to_grid_pos()
@@ -78,6 +93,8 @@ class Seeker(Npc):
 
             if target:
                 self.emit_thought(f"Exploring unexplored area: {target}")
+                target_node = self.grid.get_node(*target)
+                print(f"Target node at {target} is a wall: {target_node.is_wall}")
                 self.set_target(*target)
             else:
                 # Log the issue if no target was found
