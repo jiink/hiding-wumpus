@@ -12,6 +12,7 @@ from core.seeker import Seeker
 from models.grid import Grid
 from models.vector import Vector2
 from level_manager import LevelManager
+from simulation.simulation_manager import SimulationManager
 
 # This is just an enum.
 # Used to know what happens when you click on the grid.
@@ -83,6 +84,7 @@ class App:
         self.seeker_manual_mode = False # False = AI controlled, True = keyboard controlled
         self.mouse_down = False
         self.last_toggle_pos = None
+        self.simulation_manager = SimulationManager(self.grid, self.pathfinder, self.seeker_npc, self.hider_npc)
         self.create_ui()
         
     def next_hider(self):
@@ -192,6 +194,25 @@ class App:
             text="Load Level",
             manager=self.ui_manager
         )
+        # Simulation button
+        turbo_btn_y = btn_mn * 4 + btn_h * 3
+        self.turbo_sim_btn = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(right_x + btn_w, turbo_btn_y, btn_w * 1.5, btn_h),
+            text="Run Simulation",
+            manager=self.ui_manager
+        )
+        # "Iterations" Label next to input
+        self.sim_iterations_label = pygame_gui.elements.UILabel(
+            relative_rect=pygame.Rect(right_x + btn_w, turbo_btn_y + btn_h, btn_w * 0.8, btn_h),
+            text="Iterations:",
+            manager=self.ui_manager
+        )
+        # Simulation iterations input
+        self.sim_iterations_input = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect(right_x + btn_w * 1.8, turbo_btn_y + btn_h, btn_w * 0.7, btn_h),
+            manager=self.ui_manager
+        )
+        self.sim_iterations_input.set_text("100")  # Default 100 
 
     def refresh_dropdown(self, select_level=None):
         """Updates the dropdown with current saved levels"""
@@ -258,6 +279,13 @@ class App:
                         case self.cheats_button:
                             self.cheats = not self.cheats
                             self.cheats_button.set_text(f"Cheats: {'ON' if self.cheats else 'OFF'}")
+                        case self.turbo_sim_btn:
+                            try:
+                                iterations = int(self.sim_iterations_input.get_text())
+                                if iterations > 0:
+                                    self.run_simulation(iterations)
+                            except ValueError:
+                                print("Please enter a valid number of iterations")
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
@@ -300,6 +328,12 @@ class App:
                     self.seeker_npc.update_path()
                 elif self.click_mode == ClickMode.TARGET:
                     self.seeker_npc.set_target(grid_x, grid_y)
+
+    def run_simulation(self, iterations: int):
+        """Run simulation and display results"""
+        print(f"Running {iterations} simulations...")
+        self.simulation_manager.run_simulation(iterations)
+        print("Simulation complete!")
 
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
