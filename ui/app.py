@@ -331,12 +331,8 @@ class App:
     def run_simulation(self, iterations: int):
         """Run simulation and display results"""
         print(f"Running {iterations} simulations...")
-        self.turbo_sim_btn.set_text("Simulating...")
-        self.turbo_sim_btn.disable()
         self.simulation_manager.run_simulation(iterations)
         print("Simulation complete!")
-        self.turbo_sim_btn.set_text("Run Simulation")
-        self.turbo_sim_btn.enable()
 
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
