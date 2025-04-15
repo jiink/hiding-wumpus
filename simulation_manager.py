@@ -30,6 +30,8 @@ class SimulationManager:
             result = self._run_single_round()
             result['time'] = time.time() - start_time
             self.results.append(result)
+
+        self.generate_report()
     
     def _run_single_round(self) -> Dict:
         """Run a single simulation round and return metrics"""
@@ -79,4 +81,20 @@ class SimulationManager:
         seeker_pos = self.seeker.position.to_grid_pos()
         hider_pos = self.hider.position.to_grid_pos()
         return abs(seeker_pos[0] - hider_pos[0]) + abs(seeker_pos[1] - hider_pos[1])
+    
+    def generate_report(self, csv_filename: str = "simulation_results.csv") -> None:
+        """Save results to CSV without pandas/matplotlib"""
+        if not self.results:
+            print("No results to export")
+            return
+
+        # Prepare CSV file
+        try:
+            with open(csv_filename, mode='w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=self.results[0].keys())
+                writer.writeheader()
+                writer.writerows(self.results)
+            print(f"Results saved to {os.path.abspath(csv_filename)}")
+        except Exception as e:
+            print(f"Failed to save CSV: {e}")
     
