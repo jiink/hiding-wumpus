@@ -12,7 +12,7 @@ from core.seeker import Seeker
 from models.grid import Grid
 from models.vector import Vector2
 from level_manager import LevelManager
-from simulation_manager import SimulationManager
+from simulation.simulation_manager import SimulationManager
 
 # This is just an enum.
 # Used to know what happens when you click on the grid.
