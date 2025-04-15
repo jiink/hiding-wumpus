@@ -7,6 +7,7 @@ from models.grid import Grid
 from models.vector import Vector2
 
 class Seeker(Npc):
+    STINK_INTERVAL = 0.5 # every X seconds
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
         self.auto_move = True
@@ -21,6 +22,7 @@ class Seeker(Npc):
         self.game_over = False 
         self.start_position = self.position
         self.is_game_started = False 
+        self.stink_timer = 0
 
     def set_hider(self, hider):
         self.hider_ref = hider
@@ -131,6 +133,10 @@ class Seeker(Npc):
         return last_pos
 
     def update(self, dt: float):
+        self.stink_timer += dt
+        if self.stink_timer >= self.STINK_INTERVAL:
+            self.stink_timer = 0.0
+            self.grid.stink_it(*self.position.to_grid_pos(), radius=8)
         if self.auto_move:
             super().update(dt) 
         else:

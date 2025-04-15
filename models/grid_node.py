@@ -9,6 +9,7 @@ class GridNode:
         self.reset_path_data()
         self.seen_by_hider = True # false if obstructed by wall
         self.seen_by_seeker = True # false if obstructed by wall
+        self.stench = False
     
     def reset_path_data(self):
         self.g_score = 99999 # The path cost
@@ -22,7 +23,7 @@ class GridNode:
     
     def get_position(self) -> Tuple[int, int]:
         return (self.x, self.y)
-    
+
     # Lets you compare two GridNodes with the < symbol,
     # "lt" stands for "less than".
     def __lt__(self, other):

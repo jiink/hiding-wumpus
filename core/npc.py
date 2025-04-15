@@ -1,13 +1,15 @@
+from typing import Dict
 import pygame
 from core.pathfinder import Pathfinder
 from models.grid import Grid
+from models.grid_node import GridNode
 from models.vector import Vector2
 from constants import *
 import random
 
 # This NPC lives on a grid and pursues the target via its pathfinder.
 class Npc:
-    THINK_INTERVAL = 1.0 # This npc will think every X seconds
+    THINK_INTERVAL = 0.5 # This npc will think every X seconds
     THOUGHT_DURATION = 0.5 # how long does thought-text appear for? (in sec)
 
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
@@ -25,6 +27,9 @@ class Npc:
         self.thought_text = None
         self.thought_timer = 0
         self.auto_move = False
+        # For making certain tiles more costly in the pathfinding algorithm.
+        # Associate a GridNode with a high number to avoid travelling through it.
+        self.extra_costs: Dict[GridNode, float] = {} 
 
     def set_speed(self, speed: float):
         self.speed = speed
@@ -38,8 +43,7 @@ class Npc:
         node = self.grid.get_node(x, y)
         if node and not node.is_wall:
             self.target = Vector2(x, y)
-            self.update_path()
-            return True
+            return self.update_path()
         else:
             return False
 
@@ -57,7 +61,7 @@ class Npc:
         # round the pos to a cell coordinate
         start_pos = self.position.to_grid_pos()
         target_pos = self.target.to_tuple()
-        path_nodes = self.pathfinder.find_path(start_pos, target_pos)
+        path_nodes = self.pathfinder.find_path(start_pos, target_pos, self.extra_costs)
         # nodes to world coordinates (+0.5 offset gets you the center of the tile,
         # as each tile is 1 unit wide and tall).
         self.path = [Vector2(node.x + 0.5, node.y + 0.5) for node in path_nodes]
@@ -73,13 +77,13 @@ class Npc:
     # `dt` means delta time, the amount of time passed since the last
     # frame. This is for framerate-independent motion.
     def update(self, dt: float):
-        if self.can_think:
-            # "Think" periodically
-            self.think_timer += dt
-            if self.think_timer >= self.THINK_INTERVAL:
+        # "Think" periodically
+        self.think_timer += dt
+        if self.think_timer >= self.THINK_INTERVAL:
+            self.think_timer = 0.0
+            if self.can_think:
                 self.think()
-                self.think_timer = 0.0
-
+            
         # Update thought timer
         if self.thought_text:
             self.thought_timer += dt

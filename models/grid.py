@@ -81,13 +81,22 @@ class Grid:
         # Including diagonals (8 directions)
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
+                if dx == 0 and dy == 0: # the center is not a neighbor
                     continue
                 nx, ny = node.x + dx, node.y + dy
                 if self.is_valid_position(nx, ny):
                     neighbor = self.nodes[ny][nx]
-                    if wall_ok or not neighbor.is_wall:
-                        neighbors.append(neighbor)
+                    if not wall_ok and neighbor.is_wall:
+                        continue
+                    # tricky part: don't want paths to go through diagonal walls.
+                    if dx != 0 and dy != 0 \
+                    and self.get_node(node.x + dx, node.y) and self.get_node(node.x, node.y + dy) \
+                    and self.get_node(node.x + dx, node.y).is_wall and self.get_node(node.x, node.y + dy).is_wall:
+                        # _X_
+                        # X X
+                        # _X_
+                        continue
+                    neighbors.append(neighbor)
         return neighbors
 
     # Converts a world-space or tile coordinate to where it is on the screen.
@@ -95,6 +104,12 @@ class Grid:
         screen_x = grid_x * self.tile_size
         screen_y = grid_y * self.tile_size + UI_HEIGHT
         return (screen_x, screen_y)
+    
+    # set all nodes to non-walls
+    def clear(self):
+        for row in self.nodes:
+            for node in row:
+                node.is_wall = False
 
     # Converts screen coordinates to a coordinate of a tile on the grid.
     # Good for finding out where you clicked or something.
@@ -106,6 +121,21 @@ class Grid:
         grid_y = max(0, min(grid_y, self.size - 1))
         return (grid_x, grid_y)
     
+    # Sets stench to true in the given radius, false otherwise
+    def stink_it(self, x, y, radius) -> None:
+        for row in self.nodes:
+            for node in row:
+                node.stench = False
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                nx, ny = x + dx, y + dy
+                if self.is_valid_position(nx, ny):
+                    distance = abs(dx) + abs(dy)
+                    if distance <= radius:
+                        node = self.get_node(nx, ny)
+                        if node:
+                            node.stench = True
+
     @staticmethod
     def add_colors(color1: Tuple[int, int, int], color2: Tuple[int, int, int]) -> Tuple[int, int, int]:
         return tuple(min(c1 + c2, 255) for c1, c2 in zip(color1, color2))

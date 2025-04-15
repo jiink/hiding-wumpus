@@ -1,5 +1,5 @@
 import heapq
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import pygame
 from constants import *
@@ -34,7 +34,7 @@ class Pathfinder:
     # This is where the search algorithm happens!
     # Finds a path from the start grid coordinates to the goal grid coordinates.
     # Returns an in-order list of nodes to travel to get to the goal.
-    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[GridNode]:
+    def find_path(self, start: Tuple[int, int], goal: Tuple[int, int], extra_costs: Dict[GridNode, float] = {}) -> List[GridNode]:
         self.reset_path_data() # clean up the frontier, node values, etc.
         # The asterisk syntax here unpacks the single (x, y) coordinate
         # tuple into two arguments.
@@ -42,7 +42,9 @@ class Pathfinder:
         goal_node = self.grid.get_node(*goal)
         if not start_node or not goal_node:
             return []
-        if start_node.is_wall or goal_node.is_wall:
+        # We're not checking if it starts in a wall since I want an NPC to get
+        # out of a wall if it's in one, but never enter a wall on purpose.
+        if goal_node.is_wall: 
             return []
         start_node.g_score = 0 # the cost to get here is 0 'cause we start here.
         start_node.h_score = self.heuristic(start_node, goal_node)
@@ -72,7 +74,7 @@ class Pathfinder:
                 return self.path # early return!
             for neighbor in self.grid.get_neighbors(current_node):
                 # This is where path costs get added up
-                move_cost = 1
+                move_cost = 1 + extra_costs.get(neighbor, 0)
                 m_g_score = current_node.g_score + move_cost
                 # i ought to better understand what is going on in
                 # this part...
@@ -90,10 +92,10 @@ class Pathfinder:
     def draw_debug(self, surface: pygame.Surface):
         for node in self.visited_nodes:
             x, y = self.grid.grid_to_screen(node.x + 0.5, node.y + 0.5)
-            pygame.draw.circle(surface, VISITED_NODE_COLOR, (x, y), self.grid.tile_size * 0.4)
+            pygame.draw.circle(surface, VISITED_NODE_COLOR, (x, y), self.grid.tile_size * 0.1)
         for node in self.frontier_nodes:
             x, y = self.grid.grid_to_screen(node.x + 0.5, node.y + 0.5)
-            pygame.draw.circle(surface, FRONTIER_NODE_COLOR, (x, y), self.grid.tile_size * 0.4)
+            pygame.draw.circle(surface, FRONTIER_NODE_COLOR, (x, y), self.grid.tile_size * 0.1)
         # the path
         if len(self.path) > 1:
             points = [
