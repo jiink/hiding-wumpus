@@ -52,6 +52,9 @@ class LevelManager:
             for x, y in level_data["walls"]:
                 grid.get_node(x, y).is_wall = True
             
+            # Mark tiles as changed
+            grid.tiles_changed = True
+
             # Load NPC position
             npc.position = vector_class(*level_data["npc_position"])
             

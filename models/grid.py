@@ -13,6 +13,7 @@ class Grid:
         self.tile_size = display_size / size
         # Fill the grid with empty gridnodes
         self.nodes: List[List[GridNode]] = []
+        self.tiles_changed = False  # Flag to track if tiles have changed
         for y in range(size):
             row = []
             for x in range(size):
@@ -70,6 +71,7 @@ class Grid:
             return False
         node = self.nodes[y][x]
         node.is_wall = not node.is_wall
+        self.tiles_changed = True  # Mark tiles as changed
         return True
     
     # Returns the nodes surrounding the given node. 
@@ -182,3 +184,13 @@ class Grid:
                 (pos, UI_HEIGHT),
                 (pos, self.display_size + UI_HEIGHT)
             )
+
+    def get_visible_tiles(self, seeker_pos: tuple[int, int]) -> set[tuple[int, int]]:
+    # simple LOS checker or vision radius
+        visible = set()
+        for x in range(self.size):
+            for y in range(self.size):
+                if not self.is_wall_between(seeker_pos, (x, y)):
+                    if not self.get_node(x, y).is_wall:
+                        visible.add((x, y))
+        return visible
