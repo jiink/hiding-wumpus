@@ -308,7 +308,9 @@ class App:
                             try:
                                 iterations = int(self.sim_iterations_input.get_text())
                                 if iterations > 0:
-                                    self.run_simulation(iterations)
+                                    level_name = str(self.level_dropdown.selected_option[0]) or "UnnamedLevel"
+                                    hider_name = self.hider_npcs[self.hider_index]['name']
+                                    self.simulation_manager.run_simulation(iterations, level_name, hider_name)
                             except ValueError:
                                 print("Please enter a valid number of iterations")
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
@@ -357,7 +359,10 @@ class App:
     def run_simulation(self, iterations: int):
         """Run simulation and display results"""
         print(f"Running {iterations} simulations...")
+        level_name = self.level_name_input.get_text() or "UnnamedLevel"
+        hider_name = self.hider_npcs[self.hider_index]['name']
         self.simulation_manager.run_simulation(iterations)
+        self.simulation_manager.generate_report(level_name, hider_name)
         print("Simulation complete!")
 
     def _is_caught(self) -> bool:

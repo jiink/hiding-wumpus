@@ -24,10 +24,10 @@ class SimulationManager:
         # Tell the seeker to freeze for a moment to give the hider a chance to run away.
         self.seeker.freeze()
 
-    def run_simulation(self, iterations: int):
-        #Run multiple simulation rounds and collect data
+    def run_simulation(self, iterations: int, level_name: str, hider_name: str):
+        # Run multiple simulation rounds and collect data
         self.results = []
-        
+
         for round_num in range(iterations):
             self.reset_game()
             # Run the simulation
@@ -37,7 +37,7 @@ class SimulationManager:
             result['sim_time'] = time.time() - start_time
             self.results.append(result)
 
-        self.generate_report()
+        self.generate_report(level_name, hider_name, iterations)
     
     def _is_caught(self) -> bool:
         if self.seeker.is_frozen():
@@ -96,14 +96,18 @@ class SimulationManager:
         hider_pos = self.hider.position.to_grid_pos()
         return abs(seeker_pos[0] - hider_pos[0]) + abs(seeker_pos[1] - hider_pos[1])
     
-    # You have to change file name here each time, I'll fix that 
-    def generate_report(self, csv_filename: str = "sim_results1.csv") -> None:
+    def generate_report(self, level_name: str, hider_name: str, iterations: int) -> None:
         # Save results to CSV
         if not self.results:
             print("No results to export")
             return
-        
-        # file path to save csv file
+        sanitized_level_name = level_name.replace(" ", "_")
+        sanitized_hider_name = hider_name.replace(" ", "")
+
+        # Construct the file name dynamically
+        csv_filename = f"sim_results_{sanitized_level_name}_{sanitized_hider_name}_{iterations}.csv"
+
+        # File path to save CSV file
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         sim_folder = os.path.join(project_root, "simulation")
         file_path = os.path.join(sim_folder, csv_filename)
@@ -117,4 +121,3 @@ class SimulationManager:
             print(f"Results saved to {os.path.abspath(file_path)}")
         except Exception as e:
             print(f"Failed to save CSV: {e}")
-    
