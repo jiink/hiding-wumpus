@@ -66,6 +66,10 @@ class SimulationManager:
         was_caught = False
         hider_was_exposed = False
 
+        # Record starting positions
+        starting_s_pos = self.seeker.position.to_grid_pos()
+        starting_h_pos = self.hider.position.to_grid_pos()
+
         while steps < max_steps:
             steps += 1
             
@@ -107,7 +111,9 @@ class SimulationManager:
             'nodes_gotten': self.grid.nodes_gotten,
             's_path_length': s_path_length,
             'h_path_length': h_path_length,
-            'final_distance': self._get_distance()
+            'final_distance': self._get_distance(),
+            'starting_seeker_position': starting_s_pos,
+            'starting_hider_position': starting_h_pos
         }
     
     def _get_distance(self) -> int:
@@ -127,10 +133,11 @@ class SimulationManager:
         # Construct the file name dynamically
         csv_filename = f"sim_results_{sanitized_level_name}_{sanitized_hider_name}_{iterations}.csv"
 
-        # File path to save CSV file
+        # File path to save CSV file in the "outputs" subdirectory
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        sim_folder = os.path.join(project_root, "simulation")
-        file_path = os.path.join(sim_folder, csv_filename)
+        outputs_folder = os.path.join(project_root, "outputs")
+        os.makedirs(outputs_folder, exist_ok=True)  # Ensure the "outputs" directory exists
+        file_path = os.path.join(outputs_folder, csv_filename)
 
         # Prepare CSV file
         try:

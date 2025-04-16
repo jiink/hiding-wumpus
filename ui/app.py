@@ -301,6 +301,7 @@ class App:
                                 selected_level = selected_level[0]
                             if selected_level != "No levels":
                                 LevelManager.load_level(self.grid, self.seeker_npc, Vector2, selected_level)
+                                self.reset_game()
                         case self.cheats_button:
                             self.cheats = not self.cheats
                             self.cheats_button.set_text(f"Cheats: {'ON' if self.cheats else 'OFF'}")
@@ -316,6 +317,10 @@ class App:
                 elif event.user_type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                     if event.ui_element == self.speed_slider:
                         self.seeker_npc.set_speed(event.value)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # Check if the R key is pressed
+                    self.reset_game()  # Call the reset_game method
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.mouse_down = True
