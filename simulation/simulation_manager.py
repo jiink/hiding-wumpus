@@ -18,34 +18,35 @@ class SimulationManager:
         self.hider = hider
         self.results = []
     
+    def reset_game(self) -> None:
+        self.hider.reset()
+        self.seeker.reset()
+        # Tell the seeker to freeze for a moment to give the hider a chance to run away.
+        self.seeker.freeze()
+
     def run_simulation(self, iterations: int):
         #Run multiple simulation rounds and collect data
         self.results = []
         
         for round_num in range(iterations):
-            # Reset positions to random valid locations
-            while True:
-                seeker_x = random.randint(0, self.grid.size - 1)
-                seeker_y = random.randint(0, self.grid.size - 1)
-                hider_x = random.randint(0, self.grid.size - 1)
-                hider_y = random.randint(0, self.grid.size - 1)
-                
-                seeker_node = self.grid.get_node(seeker_x, seeker_y)
-                hider_node = self.grid.get_node(hider_x, hider_y)
-                # Ensure positions are not walls and not the same
-                if (seeker_node and not seeker_node.is_wall and 
-                    hider_node and not hider_node.is_wall and 
-                    (seeker_x, seeker_y) != (hider_x, hider_y)):
-                    break
-
+            self.reset_game()
             # Run the simulation
             print(f"Round {round_num} begin!")
             start_time = time.time()
             result = self._run_single_round()
-            result['time'] = time.time() - start_time
+            result['sim_time'] = time.time() - start_time
             self.results.append(result)
 
         self.generate_report()
+    
+    def _is_caught(self) -> bool:
+        if self.seeker.is_frozen():
+            return False
+        # Check if hider is caught.
+        seeker_pos = self.seeker.position.to_grid_pos()
+        hider_pos = self.hider.position.to_grid_pos()
+        return (abs(seeker_pos[0] - hider_pos[0]) == 0 and 
+                abs(seeker_pos[1] - hider_pos[1]) == 0)
     
     def _run_single_round(self) -> Dict:
         # Run a single simulation round and return metrics
