@@ -52,15 +52,20 @@ class SimulationManager:
         # Run a single simulation round and return metrics
         # If the hider can stay away for this many in-game seconds
         # (not real seconds), it wins.
-        max_game_time_s = 5 * 60
+        max_game_time_s = 4 * 60
         steps = 0
-        path_length = 0
-        last_position = None
+        s_path_length = 0
+        h_path_length = 0
+        last_s_pos = None
+        last_h_pos = None
         timestep = FPS / 1000 # in in-game seconds
         max_steps = max_game_time_s / timestep
         num_steps_exposed = 0 # Keeping track of how long the hider has been exposed for.
+        num_exposure_events = 0 # Count how many times the hider goes from not-exposed to exposed.
         self.grid.nodes_gotten = 0
         was_caught = False
+        hider_was_exposed = False
+
         while steps < max_steps:
             steps += 1
             
@@ -69,12 +74,24 @@ class SimulationManager:
             self.hider.update(timestep)
             
             # Track path length
-            current_pos = self.seeker.position.to_grid_pos()
-            if last_position != current_pos:
-                path_length += 1
-                last_position = current_pos
-            if self.grid.is_wall_between(self.seeker.position, self.hider.position):
+            current_s_pos = self.seeker.position.to_grid_pos()
+            if last_s_pos != current_s_pos:
+                s_path_length += 1
+                last_s_pos = current_s_pos
+            current_h_pos = self.hider.position.to_grid_pos()
+            if last_h_pos != current_h_pos:
+                h_path_length += 1
+                last_h_pos = current_h_pos
+            
+
+            is_exposed = self.grid.is_wall_between(self.seeker.position.to_grid_pos(), self.hider.position.to_grid_pos())
+            if is_exposed:
                 num_steps_exposed += 1
+                if not hider_was_exposed:
+                    num_exposure_events += 1
+                    hider_was_exposed = True
+            else:
+                hider_was_exposed = False
             
             # Check if caught
             if self._is_caught():
@@ -86,8 +103,10 @@ class SimulationManager:
             'steps': steps,
             'time_elapsed': steps / FPS,
             'time_exposed': num_steps_exposed / FPS,
+            'num_exposure_events': num_exposure_events,
             'nodes_gotten': self.grid.nodes_gotten,
-            'path_length': path_length,
+            's_path_length': s_path_length,
+            'h_path_length': h_path_length,
             'final_distance': self._get_distance()
         }
     
