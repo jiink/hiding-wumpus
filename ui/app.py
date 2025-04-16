@@ -49,7 +49,7 @@ class App:
                     "distance to shadows": 2,
                     "distance to hider": 1,
                     "size of blind spot": 1,
-                    "stench": 1,
+                    "stench": 3,
                     # Preferences for what path to take. Relative
                     # to the cost of moving 1 tile, which is 1.
                     "stench_cost": 10
@@ -67,6 +67,20 @@ class App:
                     "stench": 2,
                     # Preferences for what path to take.
                     "stench_cost": 0
+                }
+            },
+            {
+                "name": "Hider C",
+                "color": (200, 10, 255),
+                "characteristics": {
+                    # Preferences for where to hide
+                    "distance to walls": 1,
+                    "distance to shadows": 1,
+                    "distance to hider": 1,
+                    "size of blind spot": 1,
+                    "stench": 10,
+                    # Preferences for what path to take.
+                    "stench_cost": 4
                 }
             }
         ]
