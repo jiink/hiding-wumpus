@@ -34,7 +34,10 @@ class App:
         # much time passed since the last frame.
         self.clock = pygame.time.Clock() 
         self.running = True
-        self.ui_manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.ui_manager = pygame_gui.UIManager(
+            (WINDOW_WIDTH, WINDOW_HEIGHT),
+            theme_path="custom_theme.json"
+        )
         # Initialize our non-pygame stuff
         self.grid: Grid = Grid(GRID_SIZE, GRID_DISPLAY_SIZE)
         self.pathfinder = Pathfinder(self.grid)
