@@ -31,6 +31,7 @@ class Hider(Npc):
         self.blind_spot_shadow_size: dict[GridNode, float] = {}
         self.debug_nodes: list[GridNode] = []
         self.debug_text: list[str] = []
+        self.best_location = None
     
     def reset_mind(self) -> None:
         self.possible_locations: dict[GridNode, float] = {}
