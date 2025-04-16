@@ -58,7 +58,9 @@ class SimulationManager:
         last_position = None
         timestep = FPS / 1000 # in in-game seconds
         max_steps = max_game_time_s / timestep
-        
+        num_steps_exposed = 0 # Keeping track of how long the hider has been exposed for.
+        self.grid.nodes_gotten = 0
+        was_caught = False
         while steps < max_steps:
             steps += 1
             
@@ -71,21 +73,20 @@ class SimulationManager:
             if last_position != current_pos:
                 path_length += 1
                 last_position = current_pos
+            if self.grid.is_wall_between(self.seeker.position, self.hider.position):
+                num_steps_exposed += 1
             
             # Check if caught
             if self._is_caught():
-                return {
-                    'caught': True,
-                    'steps': steps,
-                    'time_elapsed': steps / FPS,
-                    'path_length': path_length,
-                    'final_distance': self._get_distance()
-                }
+                was_caught = True
+                break
         
         return {
-            'caught': False,
+            'caught': was_caught,
             'steps': steps,
             'time_elapsed': steps / FPS,
+            'time_exposed': num_steps_exposed / FPS,
+            'nodes_gotten': self.grid.nodes_gotten,
             'path_length': path_length,
             'final_distance': self._get_distance()
         }

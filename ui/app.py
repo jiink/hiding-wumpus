@@ -344,7 +344,7 @@ class App:
         """Handle tile clicks based on current mode"""
         mouse_pos = pygame.mouse.get_pos()
         # For clicks within the grid, not the UI
-        if mouse_pos[1] > UI_HEIGHT:
+        if mouse_pos[1] > UI_HEIGHT and 0 <= mouse_pos[0] < self.grid.display_size and UI_HEIGHT <= mouse_pos[1] < self.grid.display_size + UI_HEIGHT:
             grid_x, grid_y = self.grid.screen_to_grid(*mouse_pos)
             current_pos = (grid_x, grid_y)
             # Only proceed if we moved to a new tile

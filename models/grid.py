@@ -19,11 +19,13 @@ class Grid:
             for x in range(size):
                 row.append(GridNode(x, y))
             self.nodes.append(row)
+        self.nodes_gotten = 0 # just a metric
 
     # If you iterate over all the nodes using self.nodes, you'll need a nested
     # for loop. Alternatively, you can use this flattening to iterate with
     # one for loop
     def all_nodes(self) -> List[GridNode]:
+        self.nodes_gotten += GRID_SIZE * GRID_SIZE
         return [node for row in self.nodes for node in row]
     
     # Returns true if there is a solid tile between the two tile positions
@@ -59,6 +61,7 @@ class Grid:
     # Returns Optional[GridNode], which means it could be a GridNode,
     # or it could be None (which is like null)
     def get_node(self, x: int, y: int) -> Optional[GridNode]:
+        self.nodes_gotten += 1
         if not self.is_valid_position(x, y):
             return None
         return self.nodes[y][x]
