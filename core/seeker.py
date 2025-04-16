@@ -23,9 +23,7 @@ class Seeker(Npc):
             for y in range(self.grid.size)
             if not self.grid.get_node(x, y).is_wall # when user draws tiles, tile_memory can end up having wall nodes in it, which is bad. need a tile_memory_refresh function to recalculate this.
         }
-        self.game_over = False 
         self.start_position = self.position
-        self.is_game_started = False 
         self.stink_timer = 0
         self.freeze_timer = self.FREEZE_TIME
 
@@ -37,11 +35,6 @@ class Seeker(Npc):
 
     def set_hider(self, hider):
         self.hider_ref = hider
-
-    def end_game(self):
-        # self.game_over = True 
-        # self.emit_thought("Game Over! Seeker has caught the Hider!")
-        pass
 
     def refresh_tile_memory(self):
         """Refresh the tile memory to exclude wall nodes."""
@@ -67,16 +60,6 @@ class Seeker(Npc):
 
         hider_pos = self.hider_ref.position.to_grid_pos()
         seeker_pos = self.position.to_grid_pos()
-
-        # Skip the game over check during the first frame
-        if not self.is_game_started:
-            self.is_game_started = True 
-            return
-        
-        # Check if Seeker has caught the Hider
-        if seeker_pos == hider_pos:
-            self.end_game()  # End the game when the Seeker catches the Hider
-            return
 
         if not self.grid.is_wall_between(seeker_pos, hider_pos):
             # If the Hider is in sight, follow it

@@ -88,11 +88,17 @@ class App:
         self.simulation_manager = SimulationManager(self.grid, self.pathfinder, self.seeker_npc, self.hider_npc)
         self.create_ui()
         self.reset_game()
-        
+        self.splash_text = ""
+        self.splash_text_timer = 0 # seconds
+
     def next_hider(self):
         self.hider_index = (self.hider_index + 1) % len(self.hider_npcs)
         self.hider_npc.color = self.hider_npcs[self.hider_index]["color"]
     
+    def set_splash_text(self, txt) -> None:
+        self.splash_text = txt
+        self.splash_text_timer = 2 
+
     # This defines all the buttons that show up and what they do.
     # See the `handle_events` function to find where an action is taken
     # based on which button/control was used.
@@ -355,13 +361,11 @@ class App:
 
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
-         # Check if the game is over
-        if self.seeker_npc.game_over:
-            self.display_game_over_screen()  # Show the game over screen
-            return
+        self.splash_text_timer -= dt
         self.ui_manager.update(dt) # pygame_gui requires this
         if self._is_caught():
             print("Game over, seeker won.")
+            self.set_splash_text("Game over.")  # Show the game over screen
             self.reset_game()
         self.seeker_npc.update(dt)
         self.hider_npc.update(dt)
@@ -382,6 +386,8 @@ class App:
         else:
             self.hider_npc.draw(self.screen, self.debug_mode)
         self.ui_manager.draw_ui(self.screen)
+        if self.splash_text_timer > 0:
+            self.draw_splash_text()
         # Now show the frame
         pygame.display.flip()
     
@@ -395,21 +401,17 @@ class App:
         pygame.quit()
 
     # display game over
-    def display_game_over_screen(self):
-        font = pygame.font.SysFont('Arial', 48)
-        text = font.render("Game Over!", True, (255, 0, 0))  
-        text_width = text.get_width()
-        text_height = text.get_height()
-
-        # Calculate the center of the grid 
+    def draw_splash_text(self):
+        font = pygame.font.SysFont('Arial', 64)
+        alpha = max(0, min(255, int(self.splash_text_timer * 255)))  # Ensure alpha is an integer in range [0, 255]
+        text = font.render(self.splash_text, True, (255, 0, 0))  
+        text_surface = text.convert_alpha()
+        text_surface.fill((255, 0, 0, alpha), special_flags=pygame.BLEND_RGBA_MULT)  # Apply alpha
+        text_width = text_surface.get_width()
+        text_height = text_surface.get_height()
         grid_center_x = self.grid.size // 2  
         grid_center_y = self.grid.size // 2  
         screen_x, screen_y = self.grid.grid_to_screen(grid_center_x, grid_center_y)
-
-        # Adjust the position so the text is centered at the grid center
         x = screen_x - text_width // 2  
         y = screen_y - text_height // 2  
-
-        # Draw the text on the screen at the calculated position
-        self.screen.blit(text, (x, y))
-        pygame.display.flip()
+        self.screen.blit(text_surface, (x, y))
