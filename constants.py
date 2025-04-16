@@ -3,7 +3,7 @@ WINDOW_HEIGHT = 700
 GRID_SIZE = 20  # Size of the grid in cells. Square grid.
 GRID_DISPLAY_SIZE = 600  # Size of grid in pixels.
 UI_HEIGHT = 100  # Height of UI panel
-FPS = 60
+FPS = 30
 
 BACKGROUND_COLOR = (25, 25, 25)
 GRID_LINE_COLOR = (50, 50, 50)

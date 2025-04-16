@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import random
 
 import pygame
 import pygame_gui
@@ -86,6 +87,7 @@ class App:
         self.last_toggle_pos = None
         self.simulation_manager = SimulationManager(self.grid, self.pathfinder, self.seeker_npc, self.hider_npc)
         self.create_ui()
+        self.reset_game()
         
     def next_hider(self):
         self.hider_index = (self.hider_index + 1) % len(self.hider_npcs)
@@ -335,6 +337,22 @@ class App:
         self.simulation_manager.run_simulation(iterations)
         print("Simulation complete!")
 
+    def _is_caught(self) -> bool:
+        if self.seeker_npc.is_frozen():
+            return False
+        # Check if hider is caught.
+        seeker_pos = self.seeker_npc.position.to_grid_pos()
+        hider_pos = self.hider_npc.position.to_grid_pos()
+        return (abs(seeker_pos[0] - hider_pos[0]) == 0 and 
+                abs(seeker_pos[1] - hider_pos[1]) == 0)
+    
+    def reset_game(self) -> None:
+        self.hider_npc.reset()
+        self.seeker_npc.reset()
+        # Tell the seeker to freeze for a moment to give the hider a chance to run away.
+        self.seeker_npc.freeze()
+
+
     # dt is delta time, the time passed since the last update.
     def update(self, dt):
          # Check if the game is over
@@ -342,6 +360,9 @@ class App:
             self.display_game_over_screen()  # Show the game over screen
             return
         self.ui_manager.update(dt) # pygame_gui requires this
+        if self._is_caught():
+            print("Game over, seeker won.")
+            self.reset_game()
         self.seeker_npc.update(dt)
         self.hider_npc.update(dt)
         self.update_visibility()

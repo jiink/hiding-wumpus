@@ -130,7 +130,7 @@ class Grid:
             for dy in range(-radius, radius + 1):
                 nx, ny = x + dx, y + dy
                 if self.is_valid_position(nx, ny):
-                    distance = abs(dx) + abs(dy)
+                    distance = (dx**2 + dy**2)**0.5  # Euclidean distance
                     if distance <= radius:
                         node = self.get_node(nx, ny)
                         if node:

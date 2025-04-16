@@ -31,6 +31,19 @@ class Npc:
         # Associate a GridNode with a high number to avoid travelling through it.
         self.extra_costs: Dict[GridNode, float] = {} 
 
+    def reset(self):
+        # Reset positions to random valid locations
+        while True:
+            new_x = random.randint(0, self.grid.size - 1)
+            new_y = random.randint(0, self.grid.size - 1)
+            new_place = self.grid.get_node(new_x, new_y)
+            # Ensure positions are not walls and not the same
+            if new_place and not new_place.is_wall:
+                break
+        self.position = Vector2(new_x, new_y)
+        self.target = None
+        self.path = None
+
     def set_speed(self, speed: float):
         self.speed = speed
 
@@ -143,7 +156,7 @@ class Npc:
                                     (x - size, y + size), 
                                     width=3)    
                 # Only draw the path if auto_move is enabled
-                if len(self.path) > 1:
+                if self.path is not None and len(self.path) > 1:
                     points = [
                         self.grid.grid_to_screen(node.x, node.y)
                         for node in self.path

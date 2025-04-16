@@ -7,6 +7,10 @@ from models.grid import Grid
 from models.vector import Vector2
 
 class Seeker(Npc):
+    # How many seconds to stay frozen when freeze() is called.
+    # This is how much time the hider has to run away at the start
+    # of a new round.
+    FREEZE_TIME = 5.0
     STINK_INTERVAL = 0.5 # every X seconds
     def __init__(self, grid: Grid, pathfinder: Pathfinder, color: pygame.Color, can_think: bool):
         super().__init__(grid, pathfinder, color, can_think)
@@ -23,6 +27,13 @@ class Seeker(Npc):
         self.start_position = self.position
         self.is_game_started = False 
         self.stink_timer = 0
+        self.freeze_timer = self.FREEZE_TIME
+
+    def freeze(self):
+        self.freeze_timer = self.FREEZE_TIME
+
+    def is_frozen(self):
+        return self.freeze_timer > 0
 
     def set_hider(self, hider):
         self.hider_ref = hider
@@ -42,6 +53,9 @@ class Seeker(Npc):
         }
 
     def think(self):
+        if self.is_frozen():
+            self.emit_thought(f"Frozen ({round(self.freeze_timer, 1)}s)")
+            return
         if not self.hider_ref:
             self.emit_thought("No hider to track.")
             return
@@ -134,6 +148,7 @@ class Seeker(Npc):
 
     def update(self, dt: float):
         self.stink_timer += dt
+        self.freeze_timer -= dt
         if self.stink_timer >= self.STINK_INTERVAL:
             self.stink_timer = 0.0
             self.grid.stink_it(*self.position.to_grid_pos(), radius=8)
