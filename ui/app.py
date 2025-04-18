@@ -15,12 +15,6 @@ from models.vector import Vector2
 from level_manager import LevelManager
 from simulation.simulation_manager import SimulationManager
 
-# This is just an enum.
-# Used to know what happens when you click on the grid.
-class ClickMode(Enum):
-    TILE = auto()
-    TARGET = auto()
-
 # This App class is where alll those other classes come together.
 class App:
     # Sets up the pygame stuff and instantiates our classes
@@ -96,7 +90,6 @@ class App:
             characteristics=self.hider_npcs[self.hider_index]["characteristics"]
         )
         self.seeker_npc.set_hider(self.hider_npc)
-        self.click_mode = ClickMode.TILE
         self.debug_mode = True
         self.cheats = False
         self.seeker_manual_mode = False # False = AI controlled, True = keyboard controlled
@@ -126,20 +119,6 @@ class App:
         btn_w = 100 # Width
         btn_h = 30 # Height
         btn_mn = 10 # Margin
-        # The button that makes it so you change tiles when you click in the grid.
-        self.tile_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(
-                btn_mn, btn_mn,
-                btn_w, btn_h),
-            text="Tile",
-            manager=self.ui_manager
-        )
-        # The button that makes it so you place the target when you click in the grid.
-        self.target_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(btn_mn * 2 + btn_w, btn_mn, btn_w, btn_h),
-            text="Target",
-            manager=self.ui_manager
-        )
         # Toggle debug mode (for helpful visuals)
         self.debug_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(btn_mn * 3 + btn_w * 2, btn_mn, btn_w, btn_h),
@@ -272,10 +251,6 @@ class App:
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     match event.ui_element:
-                        case self.tile_button:
-                            self.click_mode = ClickMode.TILE
-                        case self.target_button:
-                            self.click_mode = ClickMode.TARGET
                         case self.debug_button:
                             self.debug_mode = not self.debug_mode
                             self.debug_button.set_text(f"Debug: {'ON' if self.debug_mode else 'OFF'}")
@@ -355,11 +330,8 @@ class App:
             # Only proceed if we moved to a new tile
             if current_pos != self.last_toggle_pos:
                 self.last_toggle_pos = current_pos
-                if self.click_mode == ClickMode.TILE:
-                    self.grid.toggle_wall(grid_x, grid_y)
-                    self.seeker_npc.update_path()
-                elif self.click_mode == ClickMode.TARGET:
-                    self.seeker_npc.set_target(grid_x, grid_y)
+                self.grid.toggle_wall(grid_x, grid_y)
+                self.seeker_npc.update_path()
 
     def run_simulation(self, iterations: int):
         """Run simulation and display results"""
