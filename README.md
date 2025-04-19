@@ -11,7 +11,7 @@ Follow these instructions if you want to run Hiding Wumpus on your own computer 
 1. Make sure Python 3.12.3 or 3.13.3 is installed. Slightly different Python versions may work just fine, but I can only guarantee that those two versions work. If you type the `python --version` into your command prompt and see that the version matches, you may continue.
 1. Open a command prompt and `cd` into the project directory.
 1. Create a Python virtual environment with the `python -m venv .venv` command.
-1. Active the Python virtual environment with the `.\.venv\Scripts\activate.bat` command.
+1. Activate the Python virtual environment with the `.\.venv\Scripts\activate.bat` command.
 1. Install the required Python packages with the `pip install -r requirements.txt` command.
 1. Run the program with the `python main.py` command. You should see the window come up.
 
