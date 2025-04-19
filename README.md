@@ -4,6 +4,48 @@ A hide-and-seek sort of game where one NPC hides from you or another NPC.
 
 For CPSC 481 Spring 2025.
 
+## How to run it (Windows)
+
+Follow these instructions if you want to run Hiding Wumpus on your own computer using its minimal requirements. If you want to run it in Visual Studio Code instead, follow the "Development quick start" instructions. 
+
+1. Make sure Python 3.12.3 or 3.13.3 is installed. Slightly different Python versions may work just fine, but I can only guarantee that those two versions work. If you type the `python --version` into your command prompt and see that the version matches, you may continue.
+1. Open a command prompt and `cd` into the project directory.
+1. Create a Python virtual environment with the `python -m venv .venv` command.
+1. Active the Python virtual environment with the `.\.venv\Scripts\activate.bat` command.
+1. Install the required Python packages with the `pip install -r requirements.txt` command.
+1. Run the program with the `python main.py` command. You should see the window come up.
+
+## Usage
+
+You can click and drag the mouse to draw walls or erase them. You can click the "Seeker: CPU" button to toggle the seeker from being controlled by AI or controlled by you, the user. When the seeker is controlled by you, you can use the WASD or arrow keys on the keyboard to move around.
+
+Other controls are described in the following diagram:
+
+![Annotated screenshot](annotated-app.png)
+
+## Layout
+
+- core/: Contains core logic and components of the game, such as:
+    - npc.py: General logic for the characters.
+    - hider.py: Logic for the NPC that hides.
+    - seeker.py: Logic for the NPC or player that seeks the hider.
+    - pathfinder.py: Implements pathfinding algorithm used by the hider and seeker.
+
+- models/: Contains data structures and models used in the game, such as:
+    - grid_node.py: Represents individual nodes in a grid.
+    - grid.py: Manages the grid structure used for pathfinding or level layout.
+    - vector.py: Basic math for vectors.
+
+- outputs/: Stores simulation results as CSVs.
+
+- saved_levels/: Contains JSON files representing predefined levels for the game.
+
+- simulation/: Handles simulation-related functionality for data collection
+    - simulation_manager.py: Manages the simulation process, metrics, results, and data recording.
+
+- ui/: Contains user interface components, such as:
+    - app.py: The main application logic for the user interface. Initialzes the hider, seeker, grid, and updates them. Runs the game loop.
+
 ## Development quick start
 
 1. Clone this repository.
